@@ -19,13 +19,14 @@ fi
 
 # Merge hooks. Use jq for safety.
 jq --arg pd "$PILOT_DIR" '
+  def has_pilot_cmd($name): any(.hooks[]?; .command? // "" | startswith($pd) and endswith($name));
   .hooks = (.hooks // {}) |
-  .hooks.PreToolUse = (.hooks.PreToolUse // []) +
-    [{"matcher":"Edit|Write","hooks":[{"type":"command","command":($pd + "/hooks/plan-gate.sh")}]}] |
-  .hooks.Stop = (.hooks.Stop // []) +
-    [{"hooks":[{"type":"command","command":($pd + "/hooks/verify-gate.sh")}]}] |
-  .hooks.SessionStart = (.hooks.SessionStart // []) +
-    [{"hooks":[{"type":"command","command":($pd + "/hooks/sessionstart-banner.sh")}]}]
+  .hooks.PreToolUse = ((.hooks.PreToolUse // []) | map(select(has_pilot_cmd("plan-gate.sh") | not)))
+    + [{"matcher":"Edit|Write","hooks":[{"type":"command","command":($pd + "/hooks/plan-gate.sh")}]}] |
+  .hooks.Stop = ((.hooks.Stop // []) | map(select(has_pilot_cmd("verify-gate.sh") | not)))
+    + [{"hooks":[{"type":"command","command":($pd + "/hooks/verify-gate.sh")}]}] |
+  .hooks.SessionStart = ((.hooks.SessionStart // []) | map(select(has_pilot_cmd("sessionstart-banner.sh") | not)))
+    + [{"hooks":[{"type":"command","command":($pd + "/hooks/sessionstart-banner.sh")}]}]
 ' "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
 
 echo "Wired hooks into $SETTINGS:"
