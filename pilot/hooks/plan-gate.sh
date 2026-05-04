@@ -4,13 +4,13 @@
 set -euo pipefail
 
 INPUT=$(cat)
-TOOL=$(echo "$INPUT" | jq -r '.tool // empty')
+TOOL=$(echo "$INPUT" | jq -r '.tool // empty' 2>/dev/null || echo "")
 
 if [[ "$TOOL" != "Edit" && "$TOOL" != "Write" ]]; then
   exit 0
 fi
 
-NEW_STRING=$(echo "$INPUT" | jq -r '.input.new_string // .input.content // ""')
+NEW_STRING=$(echo "$INPUT" | jq -r '.input.new_string // .input.content // ""' 2>/dev/null || echo "")
 LINE_COUNT=$(echo -n "$NEW_STRING" | grep -c '^' || true)
 
 if [[ "$LINE_COUNT" -le 20 ]]; then
