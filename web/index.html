@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pilot — Claude Code coding conductor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@100..800&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --paper: #f4efe1;
+      --paper-dim: #ebe4d0;
+      --paper-soft: #f9f5e8;
+      --ink: #0a0a0a;
+      --ink-dim: #4a4640;
+      --ink-soft: #8a857c;
+      --rule: #1a1a1a;
+      --accent: #ff4d1a;
+      --accent-tint: rgba(255, 77, 26, 0.08);
+      --accent-strong: #d63a08;
+      --allow: #0a0a0a;
+      --block: #ff4d1a;
+      --shadow: 0 1px 0 var(--ink);
+      --grain-opacity: 0.04;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 40px 56px 56px;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(0, 0, 0, var(--grain-opacity)) 1px, transparent 0),
+        linear-gradient(180deg, var(--paper) 0%, var(--paper-dim) 100%);
+      background-size: 24px 24px, 100% 100%;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+      mix-blend-mode: multiply;
+      z-index: 1;
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* HEADER */
+    header {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: baseline;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 56px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: var(--ink);
+      color: var(--paper-soft);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .header-meta {
+      font-size: 11px;
+      color: var(--ink-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .header-link {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color 0.15s ease;
+    }
+
+    .header-link:hover { color: var(--accent); }
+
+    /* HERO */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 56px;
+      margin-bottom: 80px;
+      align-items: end;
+      animation: riseIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s both;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .display {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 144, "wght" 900, "SOFT" 30;
+      font-size: clamp(96px, 16vw, 240px);
+      line-height: 0.82;
+      letter-spacing: -0.045em;
+      color: var(--ink);
+      margin-bottom: 32px;
+    }
+
+    .display em {
+      font-style: italic;
+      color: var(--accent);
+      font-variation-settings: "opsz" 144, "wght" 800, "SOFT" 100;
+      display: inline-block;
+      transform: translateY(-0.04em);
+    }
+
+    .lede {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 24, "wght" 400, "SOFT" 30;
+      font-size: clamp(20px, 1.8vw, 24px);
+      line-height: 1.3;
+      max-width: 42ch;
+      color: var(--ink);
+    }
+
+    .lede strong {
+      font-variation-settings: "opsz" 24, "wght" 700, "SOFT" 50;
+      color: var(--accent);
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 18px;
+      font-size: 12px;
+      color: var(--ink-dim);
+    }
+
+    .hero-side .pair {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 18px;
+      align-items: baseline;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--paper-dim);
+    }
+
+    .hero-side .pair:last-child { border-bottom: none; }
+
+    .hero-side dt {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 12, "wght" 600;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .hero-side dd { color: var(--ink-dim); line-height: 1.55; }
+
+    /* SCENARIO PICKER */
+    .scenarios {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 24px;
+      align-items: stretch;
+      padding: 16px 0;
+      border-top: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 24px;
+      animation: riseIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ctrl-btn {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--ink);
+      background: var(--paper-soft);
+      color: var(--ink);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ctrl-btn:hover {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .ctrl-btn:active { transform: translateY(1px); }
+
+    .status-running {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      margin-left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-running .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    .status-running.paused .dot { background: var(--ink-soft); animation: none; }
+
+    .scene-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+    }
+
+    .scene-tabs button {
+      padding: 10px 14px;
+      border: 1px solid var(--ink);
+      border-right: none;
+      background: var(--paper-soft);
+      color: var(--ink);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: left;
+      transition: all 0.2s ease;
+      line-height: 1.3;
+    }
+
+    .scene-tabs button:last-child { border-right: 1px solid var(--ink); }
+
+    .scene-tabs button:hover { background: var(--paper-dim); }
+
+    .scene-tabs button.active {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .scene-tabs button .scene-no {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 12, "wght" 700;
+      display: block;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    /* PROGRESS */
+    .progress {
+      height: 2px;
+      background: var(--paper-dim);
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--ink);
+      transition: width 0.1s linear;
+      width: 0%;
+    }
+
+    /* STAGE */
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: 16px;
+      margin-bottom: 56px;
+      animation: riseIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.4s both;
+    }
+
+    .terminal {
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper-soft);
+      position: relative;
+      min-height: 560px;
+      overflow: hidden;
+      box-shadow: 4px 4px 0 var(--rule);
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid #2a2a2a;
+      background: #111;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #888;
+    }
+
+    .terminal-dots {
+      display: inline-flex;
+      gap: 6px;
+      margin-right: 12px;
+    }
+
+    .terminal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #333;
+    }
+
+    .terminal-dot.r { background: #c4554d; }
+    .terminal-dot.y { background: #c98a4b; }
+    .terminal-dot.g { background: #5e8a5a; }
+
+    .terminal-body {
+      padding: 22px 24px 24px;
+      font-size: 13px;
+      line-height: 1.65;
+      min-height: 500px;
+      max-height: 600px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .terminal-body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(255, 255, 255, 0.012) 2px,
+        rgba(255, 255, 255, 0.012) 3px
+      );
+    }
+
+    .ln {
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      word-wrap: break-word;
+    }
+
+    .ln.show { opacity: 1; transform: translateY(0); }
+
+    .ln.banner {
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .ln.user::before {
+      content: "> ";
+      color: #888;
+      font-weight: 700;
+    }
+
+    .ln.user {
+      color: #f5e5b8;
+      font-weight: 500;
+    }
+
+    .ln.system {
+      color: #8a857c;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    .ln.action {
+      color: #d8d2c0;
+      padding-left: 18px;
+      position: relative;
+      font-size: 12.5px;
+    }
+
+    .ln.action::before {
+      content: "⟶";
+      position: absolute;
+      left: 0;
+      color: #6a6660;
+    }
+
+    .ln.assistant {
+      color: #d8d2c0;
+    }
+
+    .ln.assistant::before {
+      content: "← ";
+      color: #6a6660;
+    }
+
+    .ln.hook {
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 2px solid #6a6660;
+      font-size: 12px;
+      margin-left: 18px;
+    }
+
+    .ln.hook.fire.allow {
+      border-left-color: #7da876;
+      color: #cfe6c9;
+    }
+
+    .ln.hook.fire.block {
+      border-left-color: var(--accent);
+      background: rgba(255, 77, 26, 0.14);
+      color: #ffb8a2;
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      50% { transform: translateX(3px); }
+      75% { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
+    }
+
+    /* CURSOR */
+    .cursor-line {
+      display: flex;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 12px;
+      color: #6a6660;
+    }
+
+    .cursor-block {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: var(--accent);
+      margin-left: 4px;
+      animation: blink 1.05s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* STATE PANEL */
+    .state {
+      border: 1px solid var(--ink);
+      background: var(--paper-soft);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 4px 4px 0 var(--rule);
+    }
+
+    .state-section {
+      border-bottom: 1px solid var(--paper-dim);
+      padding-bottom: 16px;
+    }
+
+    .state-section:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .state-title {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .state-tag {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      padding: 2px 6px;
+      border: 1px solid var(--ink-dim);
+      color: var(--ink-dim);
+    }
+
+    .state-value {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 24, "wght" 500, "SOFT" 40;
+      font-size: 24px;
+      line-height: 1.15;
+      color: var(--ink);
+      transition: color 0.4s ease;
+      letter-spacing: -0.01em;
+    }
+
+    .state-value.accent {
+      color: var(--accent);
+      font-variation-settings: "opsz" 24, "wght" 700, "SOFT" 60;
+    }
+
+    .state-meta {
+      font-size: 11px;
+      color: var(--ink-dim);
+      margin-top: 4px;
+      letter-spacing: 0.01em;
+    }
+
+    .markers {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .marker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 9px;
+      background: var(--paper);
+      font-size: 11px;
+      border-left: 2px solid var(--accent);
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: all 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+
+    .marker.show { opacity: 1; transform: translateX(0); }
+
+    .marker-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    .markers .empty {
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-style: italic;
+    }
+
+    /* HOOK FLOW */
+    .flow {
+      border: 1px solid var(--ink);
+      background: var(--paper-soft);
+      padding: 28px;
+      margin-bottom: 56px;
+      animation: riseIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.55s both;
+    }
+
+    .flow-title {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 36, "wght" 600, "SOFT" 30;
+      font-size: 30px;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+    }
+
+    .flow-sub {
+      font-size: 12px;
+      color: var(--ink-dim);
+      margin-bottom: 24px;
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+      font-size: 12px;
+    }
+
+    .flow-cell {
+      padding: 16px 14px;
+      border: 1px solid var(--ink);
+      background: var(--paper);
+      transition: all 0.3s ease;
+      position: relative;
+      min-height: 92px;
+    }
+
+    .flow-cell + .flow-cell { border-left: none; }
+
+    .flow-cell-head {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 14, "wght" 700;
+      font-size: 13px;
+      letter-spacing: -0.01em;
+    }
+
+    .flow-cell-meta {
+      font-size: 10px;
+      color: var(--ink-dim);
+      letter-spacing: 0.04em;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .flow-cell-script {
+      font-size: 11px;
+      color: var(--ink);
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--paper-dim);
+    }
+
+    .flow-cell.active {
+      background: var(--ink);
+      color: var(--paper);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 0 var(--accent);
+    }
+
+    .flow-cell.active .flow-cell-meta,
+    .flow-cell.active .flow-cell-script { color: var(--paper-dim); }
+
+    .flow-cell.active .flow-cell-script { border-top-color: #2a2a2a; }
+
+    /* REFERENCE */
+    .reference {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 56px;
+      animation: riseIn 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.7s both;
+    }
+
+    .ref-card {
+      border: 1px solid var(--ink);
+      padding: 24px;
+      background: var(--paper-soft);
+    }
+
+    .ref-title {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 36, "wght" 700, "SOFT" 40;
+      font-size: 30px;
+      margin-bottom: 18px;
+      letter-spacing: -0.015em;
+    }
+
+    table.hooks {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    table.hooks th,
+    table.hooks td {
+      text-align: left;
+      padding: 9px 6px;
+      border-bottom: 1px solid var(--paper-dim);
+      vertical-align: top;
+    }
+
+    table.hooks tr:last-child td { border-bottom: none; }
+
+    table.hooks th {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: var(--ink-dim);
+    }
+
+    table.hooks td.id {
+      font-family: "Fraunces", serif;
+      font-variation-settings: "opsz" 14, "wght" 700;
+      color: var(--accent);
+      font-size: 14px;
+      width: 38px;
+    }
+
+    table.hooks td.script {
+      color: var(--ink);
+      font-size: 11px;
+    }
+
+    .commands {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 12.5px;
+    }
+
+    .commands code {
+      color: var(--accent);
+      font-weight: 600;
+      background: rgba(255, 77, 26, 0.06);
+      padding: 1px 5px;
+      border-radius: 1px;
+    }
+
+    .commands .desc {
+      color: var(--ink-dim);
+      margin-left: 6px;
+    }
+
+    /* FOOTER */
+    footer {
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      font-size: 11px;
+      color: var(--ink-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1080px) {
+      .hero, .stage, .reference, .flow-grid {
+        grid-template-columns: 1fr;
+      }
+      .flow-cell + .flow-cell {
+        border-left: 1px solid var(--ink);
+        border-top: none;
+      }
+      .flow-grid > * + * { border-top: none; }
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 24px 20px; }
+      header { grid-template-columns: 1fr; }
+      .scenarios { grid-template-columns: 1fr; }
+      .scene-tabs { grid-template-columns: 1fr 1fr; }
+      .scene-tabs button { border-right: 1px solid var(--ink); }
+      .scene-tabs button:nth-child(2n) { border-right: 1px solid var(--ink); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <span class="chip"><span class="chip-dot"></span> pilot v0.5.1</span>
+      <span></span>
+      <span class="header-meta">claude code · single-plugin marketplace</span>
+      <a class="header-link" href="https://github.com" target="_blank" rel="noreferrer">github →</a>
+    </header>
+
+    <section class="hero">
+      <div>
+        <h1 class="display">PIL<em>O</em>T</h1>
+        <p class="lede">
+          A Claude Code plugin that <strong>auto-routes</strong> your intent to the
+          right underlying skill, <strong>enforces</strong> CLAUDE.md quality
+          gates, and stays extensible with a one-line registry edit.
+        </p>
+      </div>
+      <dl class="hero-side">
+        <div class="pair">
+          <dt>what</dt>
+          <dd>Six shell hooks + a routing skill + six slash commands + a bundled context7 MCP, wired automatically by the plugin manifest.</dd>
+        </div>
+        <div class="pair">
+          <dt>how</dt>
+          <dd>SessionStart prints a banner. PreToolUse gates large edits and bad commits. Stop / SubagentStop verify "done" claims. PreCompact re-anchors routing rules.</dd>
+        </div>
+        <div class="pair">
+          <dt>why</dt>
+          <dd>So your AI sessions look the same across framing, planning, TDD, debugging, and shipping — without remembering which skill to invoke.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="scenarios">
+      <div class="controls">
+        <button class="ctrl-btn" id="play" aria-label="play / pause">❚❚</button>
+        <button class="ctrl-btn" id="restart" aria-label="restart">↺</button>
+        <span class="status-running" id="status"><span class="dot"></span>running</span>
+      </div>
+      <div class="scene-tabs" id="tabs">
+        <button class="active" data-scene="0"><span class="scene-no">01</span>build UI · happy path</button>
+        <button data-scene="1"><span class="scene-no">02</span>25-line edit · no plan</button>
+        <button data-scene="2"><span class="scene-no">03</span>WIP commit blocked</button>
+        <button data-scene="3"><span class="scene-no">04</span>/pilot-off bypass</button>
+        <button data-scene="4"><span class="scene-no">05</span>context7 docs lookup</button>
+      </div>
+    </section>
+
+    <div class="progress"><div class="progress-bar" id="progress"></div></div>
+
+    <section class="stage">
+      <div class="terminal">
+        <div class="terminal-header">
+          <span>
+            <span class="terminal-dots">
+              <span class="terminal-dot r"></span>
+              <span class="terminal-dot y"></span>
+              <span class="terminal-dot g"></span>
+            </span>
+            session — claude code
+          </span>
+          <span id="scene-label">scene 01</span>
+        </div>
+        <div class="terminal-body" id="term">
+          <div class="cursor-line">awaiting prompt<span class="cursor-block"></span></div>
+        </div>
+      </div>
+
+      <div class="state">
+        <div class="state-section">
+          <div class="state-title">
+            <span>active phase</span>
+            <span class="state-tag">routing</span>
+          </div>
+          <div class="state-value" id="phase">—</div>
+          <div class="state-meta" id="phase-meta">waiting for prompt</div>
+        </div>
+        <div class="state-section">
+          <div class="state-title">
+            <span>routed skill</span>
+            <span class="state-tag">via registry.md</span>
+          </div>
+          <div class="state-value" id="skill">—</div>
+        </div>
+        <div class="state-section">
+          <div class="state-title">
+            <span>active hook</span>
+            <span class="state-tag">most recent</span>
+          </div>
+          <div class="state-value" id="hook">—</div>
+          <div class="state-meta" id="hook-meta">no hook fired yet</div>
+        </div>
+        <div class="state-section">
+          <div class="state-title">
+            <span>bypass markers</span>
+            <span class="state-tag">~/.cache/pilot</span>
+          </div>
+          <div class="markers" id="markers">
+            <div class="empty">(none)</div>
+          </div>
+        </div>
+        <div class="state-section">
+          <div class="state-title">
+            <span>outcome</span>
+            <span class="state-tag" id="outcome-tag">—</span>
+          </div>
+          <div class="state-value" id="outcome">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow">
+      <h2 class="flow-title">six hook events in time order</h2>
+      <p class="flow-sub">Each box lights up when the corresponding hook fires in the active scenario above. SubagentStop shares its script with Stop — both nudge "done without evidence" claims.</p>
+      <div class="flow-grid" id="flow-grid">
+        <div class="flow-cell" data-hook="sessionstart">
+          <div class="flow-cell-head">SessionStart</div>
+          <div class="flow-cell-meta">on open</div>
+          <div class="flow-cell-script">sessionstart-banner.sh</div>
+        </div>
+        <div class="flow-cell" data-hook="plan-gate">
+          <div class="flow-cell-head">PreToolUse</div>
+          <div class="flow-cell-meta">Edit / Write / MultiEdit / NotebookEdit</div>
+          <div class="flow-cell-script">plan-gate.sh</div>
+        </div>
+        <div class="flow-cell" data-hook="pre-commit">
+          <div class="flow-cell-head">PreToolUse</div>
+          <div class="flow-cell-meta">Bash · git commit</div>
+          <div class="flow-cell-script">pre-commit.sh</div>
+        </div>
+        <div class="flow-cell" data-hook="verify">
+          <div class="flow-cell-head">Stop</div>
+          <div class="flow-cell-meta">turn ends</div>
+          <div class="flow-cell-script">verify-gate.sh</div>
+        </div>
+        <div class="flow-cell" data-hook="verify-sub">
+          <div class="flow-cell-head">SubagentStop</div>
+          <div class="flow-cell-meta">subagent ends</div>
+          <div class="flow-cell-script">verify-gate.sh</div>
+        </div>
+        <div class="flow-cell" data-hook="precompact">
+          <div class="flow-cell-head">PreCompact</div>
+          <div class="flow-cell-meta">before compaction</div>
+          <div class="flow-cell-script">precompact-anchor.sh</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="reference">
+      <div class="ref-card">
+        <h2 class="ref-title">guardrails enforced</h2>
+        <table class="hooks">
+          <tr>
+            <th>id</th>
+            <th>rule</th>
+            <th>event</th>
+            <th>script</th>
+          </tr>
+          <tr>
+            <td class="id">G1</td>
+            <td>plan before coding (&gt;20 LOC)</td>
+            <td>PreToolUse</td>
+            <td class="script">plan-gate</td>
+          </tr>
+          <tr>
+            <td class="id">G3</td>
+            <td>conventional commits, no WIP</td>
+            <td>PreToolUse</td>
+            <td class="script">pre-commit</td>
+          </tr>
+          <tr>
+            <td class="id">G7</td>
+            <td>: any needs // any: comment</td>
+            <td>PreToolUse</td>
+            <td class="script">pre-commit</td>
+          </tr>
+          <tr>
+            <td class="id">G8</td>
+            <td>no console.log in committed TS/JS</td>
+            <td>PreToolUse</td>
+            <td class="script">pre-commit</td>
+          </tr>
+          <tr>
+            <td class="id">G12</td>
+            <td>no sleep / setTimeout in tests</td>
+            <td>PreToolUse</td>
+            <td class="script">pre-commit</td>
+          </tr>
+          <tr>
+            <td class="id">G14</td>
+            <td>claim "done" only with test evidence</td>
+            <td>Stop · SubagentStop</td>
+            <td class="script">verify-gate</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="ref-card">
+        <h2 class="ref-title">slash commands</h2>
+        <div class="commands">
+          <div><code>/pilot-off</code><span class="desc">skip next gate fire of any kind</span></div>
+          <div><code>/pilot-bypass --no-plan</code><span class="desc">skip next plan-gate only</span></div>
+          <div><code>/pilot-bypass --no-precommit</code><span class="desc">skip next pre-commit only</span></div>
+          <div><code>/pilot-off-rails</code><span class="desc">disable until /pilot-back-on</span></div>
+          <div><code>/pilot-back-on</code><span class="desc">re-engage all gates</span></div>
+          <div><code>/pilot-status</code><span class="desc">wired hooks · bypass · last routes</span></div>
+          <div><code>/pilot-doctor</code><span class="desc">full install diagnostic</span></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>~/Workspace/claude-skill</span>
+      <span>v0.4.0 · 2026-05-20</span>
+    </footer>
+  </div>
+
+  <script>
+    "use strict";
+
+    const scenes = [
+      {
+        label: "scene 01 · build settings UI · happy path",
+        outcomeFinal: "shipped",
+        steps: [
+          { at: 0,    flow: "sessionstart" },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 700,  term: { type: "system", text: "registry: skills/pilot/registry.md" } },
+          { at: 1200, term: { type: "system", text: "bypass: /pilot-off | /pilot-off-rails | /pilot-bypass" } },
+          { at: 1900, term: { type: "user",   text: "build a settings panel UI for the admin page" } },
+          { at: 2600, set:  { phase: "scanning…", phaseMeta: "matching prompt against registry", skill: "—" } },
+          { at: 3400, set:  { phase: "3. Build (UI)", phaseMeta: "matched on \"UI\" keyword" } },
+          { at: 3800, set:  { skill: "frontend-design" } },
+          { at: 3800, term: { type: "system", text: "pilot routes → 3. Build (UI) · frontend-design" } },
+          { at: 4600, term: { type: "assistant", text: "opening the design — proposing a two-column layout..." } },
+          { at: 5400, term: { type: "action", text: "Edit  src/Settings.tsx  (12 lines new)" } },
+          { at: 5600, flow: "plan-gate", set: { hook: "plan-gate", hookMeta: "PreToolUse · Edit" } },
+          { at: 6100, term: { type: "hook fire allow", text: "plan-gate: 12 ≤ 20 LOC — allowed" }, set: { outcome: "allowed", outcomeTag: "G1 PASS" } },
+          { at: 6900, term: { type: "action", text: "Edit  src/SettingsRow.tsx  (8 lines new)" } },
+          { at: 7100, flow: "plan-gate" },
+          { at: 7400, term: { type: "hook fire allow", text: "plan-gate: 8 ≤ 20 LOC — allowed" } },
+          { at: 8200, term: { type: "assistant", text: "Done. Ran `bun test` — 14 passed in 0.4s." } },
+          { at: 8400, flow: "verify", set: { hook: "verify-gate", hookMeta: "Stop · evidence check" } },
+          { at: 8900, term: { type: "hook fire allow", text: "verify-gate: bun test + 14 passed — silent." }, set: { outcome: "shipped", outcomeTag: "G14 PASS" } },
+        ],
+        duration: 10500,
+      },
+      {
+        label: "scene 02 · 25-line edit, no plan in branch",
+        outcomeFinal: "blocked",
+        steps: [
+          { at: 0,    flow: "sessionstart" },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 1000, term: { type: "user", text: "just refactor the auth middleware quickly" } },
+          { at: 1800, set: { phase: "7. Refactor", phaseMeta: "matched on \"refactor\"", skill: "improve-codebase-architecture" } },
+          { at: 1800, term: { type: "system", text: "pilot routes → 7. Refactor · improve-codebase-architecture" } },
+          { at: 2800, term: { type: "assistant", text: "opening auth.ts — 75 lines, will rewrite the chain..." } },
+          { at: 3600, term: { type: "action", text: "Edit  src/middleware/auth.ts  (25 lines new)" } },
+          { at: 3800, flow: "plan-gate", set: { hook: "plan-gate", hookMeta: "PreToolUse · Edit · 25 > 20 LOC" } },
+          { at: 4400, term: { type: "hook fire block", text: "plan-gate: G1 — write a plan first." }, set: { outcome: "blocked", outcomeTag: "G1 BLOCK" } },
+          { at: 4800, term: { type: "system", text: "no plan in docs/superpowers/plans/ or .planning/**/PLAN.md" } },
+          { at: 5400, term: { type: "system", text: "bypass: /pilot-bypass --no-plan (use sparingly)" } },
+          { at: 6400, term: { type: "assistant", text: "Backing off. Let me draft a plan via writing-plans first..." } },
+          { at: 7200, set: { phase: "2. Plan", skill: "superpowers:writing-plans", phaseMeta: "re-routed after block" } },
+          { at: 7200, term: { type: "system", text: "pilot routes → 2. Plan · superpowers:writing-plans" } },
+        ],
+        duration: 8800,
+      },
+      {
+        label: "scene 03 · WIP commit blocked by G3",
+        outcomeFinal: "shipped",
+        steps: [
+          { at: 0,    flow: "sessionstart" },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 900,  term: { type: "user", text: "commit what we have so far" } },
+          { at: 1700, set: { phase: "8. Ship", phaseMeta: "commit intent · pre-commit gates fire", skill: "gsd-ship" } },
+          { at: 2400, term: { type: "assistant", text: "committing current state..." } },
+          { at: 3100, term: { type: "action", text: 'Bash  git commit -m "WIP: progress"' } },
+          { at: 3300, flow: "pre-commit", set: { hook: "pre-commit", hookMeta: "PreToolUse · Bash · git commit" } },
+          { at: 3900, term: { type: "hook fire block", text: "pre-commit: G3 — WIP commits forbidden. Squash or rewrite." }, set: { outcome: "blocked", outcomeTag: "G3 BLOCK" } },
+          { at: 5000, term: { type: "assistant", text: "Renaming to a conventional message..." } },
+          { at: 5700, term: { type: "action", text: 'Bash  git commit -m "feat(auth): extract middleware"' } },
+          { at: 5900, flow: "pre-commit" },
+          { at: 6400, term: { type: "hook fire allow", text: "pre-commit: G3 ✓ G7 ✓ G8 ✓ G12 ✓ — allowed" }, set: { outcome: "shipped", outcomeTag: "ALL PASS" } },
+          { at: 7000, term: { type: "assistant", text: "Committed. ready to push." } },
+        ],
+        duration: 8200,
+      },
+      {
+        label: "scene 04 · /pilot-off arms a one-shot bypass",
+        outcomeFinal: "gate re-engages",
+        steps: [
+          { at: 0,    flow: "sessionstart" },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 900,  term: { type: "user", text: "one quick scratch edit — no plan, no fuss" } },
+          { at: 1700, term: { type: "user", text: "/pilot-off" } },
+          { at: 2200, marker: { name: "bypass-once", add: true }, set: { hook: "marker written", hookMeta: "~/.cache/pilot/bypass-once" } },
+          { at: 2400, term: { type: "system", text: "pilot off: one-shot bypass armed. Next gate fire will be skipped." } },
+          { at: 3300, term: { type: "action", text: "Edit  scratch.ts  (40 lines new)" } },
+          { at: 3500, flow: "plan-gate", set: { hook: "plan-gate", hookMeta: "PreToolUse · Edit · checking markers" } },
+          { at: 4100, term: { type: "hook fire allow", text: "plan-gate: bypassed (bypass-once consumed)." }, set: { outcome: "bypassed", outcomeTag: "ONE-SHOT" } },
+          { at: 4100, marker: { name: "bypass-once", add: false } },
+          { at: 5000, term: { type: "assistant", text: "Done — marker auto-consumed. Gate now re-engaged." } },
+          { at: 5900, term: { type: "action", text: "Edit  scratch2.ts  (40 lines new)" } },
+          { at: 6100, flow: "plan-gate" },
+          { at: 6500, term: { type: "hook fire block", text: "plan-gate: G1 — 40 LOC, no plan, no bypass." }, set: { outcome: "gate re-engaged", outcomeTag: "G1 BLOCK" } },
+        ],
+        duration: 8500,
+      },
+      {
+        label: "scene 05 · context7 docs lookup · bundled MCP",
+        outcomeFinal: "docs delivered",
+        steps: [
+          { at: 0,    flow: "sessionstart" },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 900,  term: { type: "user", text: "how does Server Components work in React 19?" } },
+          { at: 1700, set: { phase: "Docs lookup", phaseMeta: "library + version detected", skill: "context7 MCP" } },
+          { at: 1700, term: { type: "system", text: "pilot routes → Docs lookup · context7 MCP (bundled)" } },
+          { at: 2600, term: { type: "assistant", text: "Pulling current React 19 docs via context7..." } },
+          { at: 3400, term: { type: "action", text: "mcp__context7__resolve-library-id  ('react 19')" } },
+          { at: 4200, term: { type: "system", text: "→ id: /reactjs/react.dev (server-components topic)" } },
+          { at: 5000, term: { type: "action", text: "mcp__context7__get-library-docs  ('/reactjs/react.dev', tokens=3000)" } },
+          { at: 5800, term: { type: "system", text: "→ 12 doc excerpts retrieved (RSC, async components, use())" } },
+          { at: 6700, term: { type: "assistant", text: "Server Components run only on the server. They can be async..." }, set: { outcome: "docs delivered", outcomeTag: "FRESH DOCS" } },
+          { at: 7600, term: { type: "system", text: "tip: set CONTEXT7_API_KEY for higher rate limits (free tier works)" } },
+        ],
+        duration: 9000,
+      },
+    ];
+
+    let currentScene = 0;
+    let playing = true;
+    let startTs = performance.now();
+    let pauseAccum = 0;
+    let pauseStart = 0;
+    let lastIndex = -1;
+    const activeMarkers = new Set();
+
+    const els = {
+      term: document.getElementById("term"),
+      sceneLabel: document.getElementById("scene-label"),
+      phase: document.getElementById("phase"),
+      phaseMeta: document.getElementById("phase-meta"),
+      skill: document.getElementById("skill"),
+      hook: document.getElementById("hook"),
+      hookMeta: document.getElementById("hook-meta"),
+      outcome: document.getElementById("outcome"),
+      outcomeTag: document.getElementById("outcome-tag"),
+      markers: document.getElementById("markers"),
+      progress: document.getElementById("progress"),
+      tabs: document.getElementById("tabs"),
+      flowCells: document.querySelectorAll(".flow-cell"),
+      playBtn: document.getElementById("play"),
+      restartBtn: document.getElementById("restart"),
+      status: document.getElementById("status"),
+    };
+
+    function resetScene() {
+      const scene = scenes[currentScene];
+      // clear terminal except for the cursor line at the end
+      els.term.innerHTML = '<div class="cursor-line">awaiting prompt<span class="cursor-block"></span></div>';
+      els.sceneLabel.textContent = scene.label.split(" · ")[0];
+      els.phase.textContent = "—";
+      els.phase.classList.remove("accent");
+      els.phaseMeta.textContent = "waiting for prompt";
+      els.skill.textContent = "—";
+      els.hook.textContent = "—";
+      els.hookMeta.textContent = "no hook fired yet";
+      els.outcome.textContent = "—";
+      els.outcome.classList.remove("accent");
+      els.outcomeTag.textContent = "—";
+      els.markers.innerHTML = '<div class="empty">(none)</div>';
+      els.flowCells.forEach(c => c.classList.remove("active"));
+      activeMarkers.clear();
+      lastIndex = -1;
+      startTs = performance.now();
+      pauseAccum = 0;
+      pauseStart = 0;
+    }
+
+    function applyStep(step) {
+      if (step.term) {
+        const cursor = els.term.querySelector(".cursor-line");
+        const div = document.createElement("div");
+        div.className = "ln " + step.term.type;
+        div.textContent = step.term.text;
+        if (cursor) {
+          els.term.insertBefore(div, cursor);
+        } else {
+          els.term.appendChild(div);
+        }
+        requestAnimationFrame(() => div.classList.add("show"));
+        els.term.scrollTop = els.term.scrollHeight;
+      }
+      if (step.set) {
+        for (const k in step.set) {
+          const v = step.set[k];
+          if (k === "phase") {
+            els.phase.textContent = v;
+            els.phase.classList.toggle("accent", v.includes("Plan") || v.includes("Refactor"));
+          } else if (k === "phaseMeta") {
+            els.phaseMeta.textContent = v;
+          } else if (k === "skill") {
+            els.skill.textContent = v;
+          } else if (k === "hook") {
+            els.hook.textContent = v;
+          } else if (k === "hookMeta") {
+            els.hookMeta.textContent = v;
+          } else if (k === "outcome") {
+            els.outcome.textContent = v;
+            const block = /block|re-engaged/i.test(v);
+            els.outcome.classList.toggle("accent", block);
+          } else if (k === "outcomeTag") {
+            els.outcomeTag.textContent = v;
+          }
+        }
+      }
+      if (step.flow) {
+        els.flowCells.forEach(c => c.classList.remove("active"));
+        const cell = document.querySelector('[data-hook="' + step.flow + '"]');
+        if (cell) cell.classList.add("active");
+      }
+      if (step.marker) {
+        if (step.marker.add) activeMarkers.add(step.marker.name);
+        else activeMarkers.delete(step.marker.name);
+        renderMarkers();
+      }
+    }
+
+    function renderMarkers() {
+      if (activeMarkers.size === 0) {
+        els.markers.innerHTML = '<div class="empty">(none)</div>';
+        return;
+      }
+      els.markers.innerHTML = "";
+      activeMarkers.forEach(m => {
+        const el = document.createElement("div");
+        el.className = "marker";
+        el.innerHTML = '<span class="marker-dot"></span><span>' + m + '</span>';
+        els.markers.appendChild(el);
+        requestAnimationFrame(() => el.classList.add("show"));
+      });
+    }
+
+    function tick(ts) {
+      if (playing) {
+        const elapsed = ts - startTs - pauseAccum;
+        const scene = scenes[currentScene];
+        const steps = scene.steps;
+        for (let i = lastIndex + 1; i < steps.length; i++) {
+          if (elapsed >= steps[i].at) {
+            applyStep(steps[i]);
+            lastIndex = i;
+          } else {
+            break;
+          }
+        }
+        const pct = Math.min(100, (elapsed / scene.duration) * 100);
+        els.progress.style.width = pct + "%";
+
+        if (elapsed > scene.duration + 1100) {
+          currentScene = (currentScene + 1) % scenes.length;
+          syncTabs();
+          resetScene();
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function syncTabs() {
+      els.tabs.querySelectorAll("button").forEach((b, i) => {
+        b.classList.toggle("active", i === currentScene);
+      });
+    }
+
+    els.tabs.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentScene = parseInt(btn.dataset.scene, 10);
+        syncTabs();
+        resetScene();
+        playing = true;
+        els.playBtn.textContent = "❚❚";
+        els.status.classList.remove("paused");
+        els.status.querySelector("span:last-child").textContent = "running";
+      });
+    });
+
+    els.playBtn.addEventListener("click", () => {
+      playing = !playing;
+      els.playBtn.textContent = playing ? "❚❚" : "▶";
+      els.status.classList.toggle("paused", !playing);
+      els.status.querySelector("span:last-child").textContent = playing ? "running" : "paused";
+      if (!playing) {
+        pauseStart = performance.now();
+      } else if (pauseStart) {
+        pauseAccum += performance.now() - pauseStart;
+        pauseStart = 0;
+      }
+    });
+
+    els.restartBtn.addEventListener("click", () => {
+      resetScene();
+      playing = true;
+      els.playBtn.textContent = "❚❚";
+      els.status.classList.remove("paused");
+      els.status.querySelector("span:last-child").textContent = "running";
+    });
+
+    // Init
+    resetScene();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
