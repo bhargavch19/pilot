@@ -186,6 +186,7 @@ and fall back to `gh` CLI invocations via Bash.
 | "security review", "audit", "OWASP", diff touches auth/crypto/network | 6.5 Security (mandatory before Ship) |
 | "messy", "hard to change", code smell | 7. Refactor |
 | "migration", "schema change", "upgrade dep", diff touches migrations/ or lockfile | 7.5 Migration |
+| "deploy", "release", "ship to prod" | 7.75 Pre-deploy (mandatory before Ship) |
 | Phase complete | 9. Capture (auto) |
 
 ## Playbooks
