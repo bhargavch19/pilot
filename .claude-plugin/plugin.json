@@ -3,9 +3,11 @@
   "version": "0.2.0",
   "description": "Unified AI coding conductor — auto-routes intent to the right skill (grill, plan, TDD, debug, verify, ship), enforces CLAUDE.md quality gates, and stays extensible via registry.md.",
   "author": {
-    "name": "Bhargav Chellu"
+    "name": "Bhargav Chelluboina"
   },
+  "license": "MIT",
   "keywords": ["workflow", "conductor", "tdd", "guardrails", "routing"],
+  "skills": "./skills/",
   "hooks": {
     "PreToolUse": [
       {
