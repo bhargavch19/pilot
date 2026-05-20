@@ -39,11 +39,11 @@ TRANSCRIPT=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/nul
 if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
   USER_MSGS=$(jq -r 'select(.type=="user") | (.message.content // .message | tostring)' "$TRANSCRIPT" 2>/dev/null | tail -30 || true)
   LAST_USER=$(printf '%s' "$USER_MSGS" | tail -1)
-  if printf '%s' "$LAST_USER" | grep -qiE 'pilot[[:space:]]+off([[:space:]]+rails)?([[:space:]]|$|[[:punct:]])'; then
+  if printf '%s' "$LAST_USER" | grep -qiE '(^|[[:space:]]|[[:punct:]])pilot[[:space:]]+off([[:space:]]+rails)?([[:space:]]|$|[[:punct:]])'; then
     echo "pre-commit: bypassed (pilot off in last user message)." >&2
     exit 0
   fi
-  STATE=$(printf '%s' "$USER_MSGS" | grep -iE 'pilot[[:space:]]+(off[[:space:]]+rails|back[[:space:]]+on)' | tail -1 || true)
+  STATE=$(printf '%s' "$USER_MSGS" | grep -iE '(^|[[:space:]]|[[:punct:]])pilot[[:space:]]+(off[[:space:]]+rails|back[[:space:]]+on)' | tail -1 || true)
   if [[ "$STATE" =~ off[[:space:]]+rails ]]; then
     echo "pre-commit: bypassed (pilot off rails active)." >&2
     exit 0

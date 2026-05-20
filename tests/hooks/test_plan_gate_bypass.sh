@@ -88,4 +88,25 @@ if [[ "$rc" -ne 1 ]]; then
 fi
 echo "PASS: irrelevant transcript does not bypass"
 
+# Case F: substring without leading word boundary → should NOT bypass.
+# "shutdownpilot off rails" contains the phrase but `pilot` isn't a
+# standalone word; the leading-boundary anchor must prevent the bypass.
+t=$(mk_transcript "hi" "shutdownpilot off rails")
+input=$(mk_input "$t")
+set +e
+echo "$input" | "$HOOK" >/dev/null 2>&1
+rc=$?
+set -e
+if [[ "$rc" -ne 1 ]]; then
+  echo "FAIL: glued-prefix 'shutdownpilot off rails' should not bypass; got $rc"
+  exit 1
+fi
+echo "PASS: leading word-boundary blocks substring false positive"
+
+# Case G: legitimate leading punctuation ("(pilot off)") → bypass allowed.
+t=$(mk_transcript "first" "(pilot off) for this one")
+input=$(mk_input "$t")
+echo "$input" | "$HOOK" >/dev/null 2>&1
+echo "PASS: leading punctuation allows bypass"
+
 echo "ALL plan-gate bypass tests passed."
