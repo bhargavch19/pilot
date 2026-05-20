@@ -17,6 +17,21 @@ if [[ "$LINE_COUNT" -le 20 ]]; then
   exit 0
 fi
 
+# Bypass via marker files (written by /pilot-off, /pilot-off-rails,
+# /pilot-bypass slash commands). One-shot markers are consumed.
+BYPASS_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/pilot"
+for m in bypass-no-plan-once bypass-once; do
+  if [[ -f "$BYPASS_DIR/$m" ]]; then
+    rm -f "$BYPASS_DIR/$m"
+    echo "plan-gate: bypassed ($m consumed)." >&2
+    exit 0
+  fi
+done
+if [[ -f "$BYPASS_DIR/bypass-session" ]]; then
+  echo "plan-gate: bypassed (session bypass active — /pilot-back-on to re-engage)." >&2
+  exit 0
+fi
+
 # Bypass: respect "pilot off", "pilot off rails", "pilot --no-plan" in the
 # last user message, or an active "off rails" state.
 TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)

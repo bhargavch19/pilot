@@ -22,6 +22,18 @@ if ! [[ "$CMD" =~ (^|[^a-zA-Z])git[[:space:]]+commit([[:space:]]|$) ]]; then
   exit 0
 fi
 
+# Bypass via marker files (written by /pilot-off / /pilot-off-rails).
+BYPASS_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/pilot"
+if [[ -f "$BYPASS_DIR/bypass-once" ]]; then
+  rm -f "$BYPASS_DIR/bypass-once"
+  echo "pre-commit: bypassed (bypass-once consumed)." >&2
+  exit 0
+fi
+if [[ -f "$BYPASS_DIR/bypass-session" ]]; then
+  echo "pre-commit: bypassed (session bypass active)." >&2
+  exit 0
+fi
+
 # Bypass: respect "pilot off" / "pilot off rails" in last user msg.
 TRANSCRIPT=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)
 if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
