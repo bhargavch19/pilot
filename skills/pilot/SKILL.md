@@ -187,6 +187,7 @@ and fall back to `gh` CLI invocations via Bash.
 | "messy", "hard to change", code smell | 7. Refactor |
 | "migration", "schema change", "upgrade dep", diff touches migrations/ or lockfile | 7.5 Migration |
 | "deploy", "release", "ship to prod" | 7.75 Pre-deploy (mandatory before Ship) |
+| "monitor", "after deploy", "rollback", "did the deploy work" | 8.5 Post-deploy |
 | Phase complete | 9. Capture (auto) |
 
 ## Playbooks
