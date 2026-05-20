@@ -32,6 +32,7 @@ into `~/.claude/settings.json` using absolute paths.
 | G8 | No dead code, no `console.log` | `hooks/pre-commit.sh` | `PreToolUse: Bash` matching `git commit` | Block on `console.log(` in staged TS/JS/TSX/JSX. |
 | G12 | No `sleep`/timeout patches for flaky tests | `hooks/pre-commit.sh` | `PreToolUse: Bash` matching `git commit` | Block on new `sleep(` or `setTimeout(` in staged files matching `*test*`/`*spec*`. |
 | G14 | Verify before claiming done | `hooks/verify-gate.sh` | `Stop` | Warn (no block) when transcript contains a "done"/"ready"/"passing" claim without test-runner output evidence. |
+| —  | Routing telemetry (observability, not a guard) | `hooks/log-skill-invocation.sh` | `PostToolUse: Skill` | Append one line per Skill invocation to `~/.cache/pilot/routing.log` (capped at 500 lines). Surfaced by `/pilot-status`. |
 
 `G15` (dangerous git ops — `push --force`, `reset --hard`, `clean -f`,
 `branch -D`) is not part of pilot itself. Install the dedicated

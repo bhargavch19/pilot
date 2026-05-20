@@ -169,23 +169,10 @@ For multi-step phase combinations, see:
 
 Default: route. Ask only when a guardrail forces it (e.g., G1 needs scope to be known before plan vs build).
 
-## Routing telemetry (optional)
+## Routing telemetry
 
-After picking a phase + skill, append one terse line to
-`${XDG_CACHE_HOME:-~/.cache}/pilot/routing.log` via a single Bash call:
-
-```bash
-LOG="${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log"
-mkdir -p "$(dirname "$LOG")"
-printf '%s phase=<N>.<name> skill=<routed-skill> trigger=<keyword>\n' \
-  "$(date -u +%FT%TZ)" >> "$LOG"
-# Keep the file from growing forever: cap at the last 500 lines.
-# Cheap and runs every append since the file stays small.
-if [[ $(wc -l < "$LOG") -gt 500 ]]; then
-  tail -500 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
-fi
-```
-
-This lets `/pilot-status` show recent routing choices for debugging.
-Skip the log write when a bypass marker is armed (no need to log a
-no-op turn) and never log secrets / file paths beyond the skill name.
+`hooks/log-skill-invocation.sh` runs on `PostToolUse: Skill` and appends
+one line per Skill invocation to `${XDG_CACHE_HOME:-~/.cache}/pilot/routing.log`
+(bounded at 500 lines). You don't have to write to that file yourself —
+the hook fires whenever you invoke the Skill tool. `/pilot-status`
+surfaces the recent entries for debugging.

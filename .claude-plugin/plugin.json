@@ -43,6 +43,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/log-skill-invocation.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
