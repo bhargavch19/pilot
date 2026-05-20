@@ -35,7 +35,7 @@ fi
 
 # Built-in test runners. Conservative regex: bare command followed by space
 # or end-of-line to avoid matching `make test-fixtures` etc.
-DEFAULT_RUNNERS='(pytest|npm test|npm run test|bun( run)? test|pnpm( run)? test|yarn( run)? test|cargo test|cargo nextest|go test|jest|vitest|nx test|mocha|tap|make test|gradle test|mvn test|sbt test|cabal test|stack test|dotnet test|phpunit|rspec|elixir test|mix test)\b'
+DEFAULT_RUNNERS='(pytest|npm test|npm run test|bun( run)? test|pnpm( run)? test|yarn( run)? test|cargo test|cargo nextest|go test|jest|vitest|nx test|mocha|tap|make test|gradle test|mvn test|sbt test|cabal test|stack test|dotnet test|phpunit|rspec|elixir test|mix test|node --test(-only)?)\b'
 
 # Per-repo runner extensions via .pilot.json. (YAML support dropped in 0.3.0:
 # the awk-based parser couldn't handle quoted values, multi-key files, or
@@ -54,7 +54,7 @@ else
   RUNNERS="$DEFAULT_RUNNERS"
 fi
 
-RESULTS='(passed|PASS|✓|✔|All tests pass|tests passed|0 failed|0 failures|0 errors|ok [0-9]+|OK \()'
+RESULTS='(passed|PASS|✓|✔|All tests pass|tests passed|0 failed|0 failures|0 errors|ok [0-9]+|OK \(|pass [0-9]+|fail 0)'
 
 if echo "$LAST" | grep -qE "$RUNNERS" && echo "$LAST" | grep -qE "$RESULTS"; then
   exit 0

@@ -82,6 +82,18 @@ OUT=$(mk_input "$t" | "$HOOK" 2>&1)
 [[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: make test not recognised"; exit 1; }
 echo "PASS: make test evidence allowed"
 
+# Case 8: node --test evidence → allow.
+t=$(mk_transcript "ran node --test — ℹ tests 18 ℹ pass 18 ℹ fail 0. Done.")
+OUT=$(mk_input "$t" | "$HOOK" 2>&1)
+[[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: node --test not recognised"; exit 1; }
+echo "PASS: node --test evidence allowed"
+
+# Case 8b: node --test-only also recognised.
+t=$(mk_transcript "node --test-only ran — All tests passed. Complete.")
+OUT=$(mk_input "$t" | "$HOOK" 2>&1)
+[[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: node --test-only not recognised"; exit 1; }
+echo "PASS: node --test-only evidence allowed"
+
 # Case 9: per-repo .pilot.json extends runners.
 echo '{"test_patterns":["another-runner"]}' > .pilot.json
 t=$(mk_transcript "another-runner — 12 passed. Done.")
