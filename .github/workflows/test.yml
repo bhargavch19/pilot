@@ -76,3 +76,20 @@ jobs:
             .claude-plugin/plugin.json
           jq -e '.name and .owner and (.plugins | length > 0)' \
             .claude-plugin/marketplace.json
+
+      - name: mcpServers entries well-formed
+        run: |
+          # Every entry needs a .command string. .args/env optional.
+          jq -e '
+            (.mcpServers // {})
+            | to_entries
+            | all(.value.command and (.value.command | type == "string"))
+          ' .claude-plugin/plugin.json
+          # If any entry uses args, all elements must be strings.
+          jq -e '
+            (.mcpServers // {})
+            | to_entries
+            | all(
+                (.value.args // []) | type == "array" and all(. | type == "string")
+              )
+          ' .claude-plugin/plugin.json
