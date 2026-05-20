@@ -4,6 +4,36 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.6.0] — 2026-05-20
+
+Production-grade MCP bundle. Pilot now ships three MCP servers covering
+the highest-value gaps in the verify-and-ship loop.
+
+### Added
+- **`@playwright/mcp@0.0.75` bundled.** Browser-driving tools — navigate,
+  snapshot, click, fill, evaluate, screenshot. Pilot's Verify phase now
+  has a real way to prove a UI change works, not just "tests pass."
+  First-run downloads Chromium (~300MB).
+- **`@modelcontextprotocol/server-github@2025.4.8` bundled.** GitHub REST
+  as MCP tools — PRs, reviews, CI status, issues, code/issue search.
+  Pilot's Review/Ship phases can read real GitHub state instead of
+  inferring from local git. Writes require `GITHUB_TOKEN`.
+- **Registry routing rows for both.** New "UI verify" row routes to
+  playwright; new "GitHub ops" row routes to github MCP with `gh` CLI
+  fallback.
+- **SKILL.md sections for both MCPs.** Document the proactive-use
+  pattern: playwright in Verify-after-Build-UI; github MCP in
+  Review/Ship for real PR/CI state. Common tools listed, recommended
+  workflow, first-run/auth caveats.
+- **Per-server opt-out env vars:** `PILOT_DISABLE_PLAYWRIGHT`,
+  `PILOT_DISABLE_GITHUB` (matching the existing `PILOT_DISABLE_CONTEXT7`).
+- **`check-prereqs.sh`** reports a status row per bundled MCP honoring
+  opt-out env vars and surfacing `GITHUB_TOKEN` presence.
+
+### Documented (not bundled)
+- `chrome-devtools-mcp` as a lighter alternative to playwright (no
+  Chromium download — attaches to your existing Chrome).
+
 ## [0.5.1] — 2026-05-20
 
 Patch follow-up on 0.5.0 — closes the open audit findings on the
