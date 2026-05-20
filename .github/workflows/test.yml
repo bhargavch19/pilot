@@ -34,6 +34,9 @@ jobs:
       - name: Run hook + dev tests
         run: bash tests/run.sh
 
+      - name: End-to-end dry-run
+        run: bash dev/dry-run.sh
+
   shellcheck:
     name: shellcheck (hooks + dev)
     runs-on: ubuntu-latest

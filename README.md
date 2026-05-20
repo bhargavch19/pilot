@@ -97,11 +97,12 @@ runner list (pytest, bun test, vitest, nx test, make test, ...).
 ## Tests
 
 ```bash
-bash tests/run.sh
+bash tests/run.sh    # unit-style fixture tests for every hook
+bash dev/dry-run.sh  # end-to-end simulation with realistic Claude Code JSON
 ```
 
-Runs all hook tests and the wire/unwire integration test. Plain bash + jq;
-no extra deps.
+Plain bash + jq; no extra deps. CI runs both on ubuntu-latest and
+macos-latest plus shellcheck on `hooks/` and `dev/`.
 
 ## Project context
 
