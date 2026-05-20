@@ -36,15 +36,24 @@ if ! jq -e '.hooks.Stop | map(.hooks[].command) | map(endswith("/hooks/verify-ga
   echo "FAIL: verify-gate.sh not wired"
   exit 1
 fi
+if ! jq -e '.hooks.SubagentStop | map(.hooks[].command) | map(endswith("/hooks/verify-gate.sh")) | any' "$TMP/.claude/settings.json" >/dev/null; then
+  echo "FAIL: verify-gate.sh not wired on SubagentStop"
+  exit 1
+fi
 if ! jq -e '.hooks.SessionStart | map(.hooks[].command) | map(endswith("/hooks/sessionstart-banner.sh")) | any' "$TMP/.claude/settings.json" >/dev/null; then
   echo "FAIL: sessionstart-banner.sh not wired"
+  exit 1
+fi
+# matcher should include MultiEdit and NotebookEdit
+if ! jq -e '.hooks.PreToolUse | map(select(.matcher | contains("MultiEdit") and contains("NotebookEdit"))) | length > 0' "$TMP/.claude/settings.json" >/dev/null; then
+  echo "FAIL: plan-gate matcher missing MultiEdit/NotebookEdit"
   exit 1
 fi
 if ! jq -e '.hooks.PreToolUse | map(.hooks[].command) | index("/some/other/hook.sh")' "$TMP/.claude/settings.json" >/dev/null; then
   echo "FAIL: non-pilot hook lost during wire"
   exit 1
 fi
-echo "PASS: wire installs 4 pilot hooks and preserves foreign hook"
+echo "PASS: wire installs 5 pilot hooks (incl. SubagentStop + MultiEdit matcher) and preserves foreign hook"
 
 # Wire again — must be idempotent (still exactly one of each).
 HOME="$TMP" bash "$ROOT/dev/wire-hooks.sh" >/dev/null

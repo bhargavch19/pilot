@@ -32,10 +32,12 @@ jq --arg pd "$PLUGIN_DIR" '
   .hooks = (.hooks // {}) |
   .hooks.PreToolUse = ((.hooks.PreToolUse // []) | drop_pilot("plan-gate.sh") | drop_pilot("pre-commit.sh"))
     + [
-        {"matcher":"Edit|Write","hooks":[{"type":"command","command":($pd + "/hooks/plan-gate.sh")}]},
+        {"matcher":"Edit|Write|MultiEdit|NotebookEdit","hooks":[{"type":"command","command":($pd + "/hooks/plan-gate.sh")}]},
         {"matcher":"Bash","hooks":[{"type":"command","command":($pd + "/hooks/pre-commit.sh")}]}
       ] |
   .hooks.Stop = ((.hooks.Stop // []) | drop_pilot("verify-gate.sh"))
+    + [{"hooks":[{"type":"command","command":($pd + "/hooks/verify-gate.sh")}]}] |
+  .hooks.SubagentStop = ((.hooks.SubagentStop // []) | drop_pilot("verify-gate.sh"))
     + [{"hooks":[{"type":"command","command":($pd + "/hooks/verify-gate.sh")}]}] |
   .hooks.SessionStart = ((.hooks.SessionStart // []) | drop_pilot("sessionstart-banner.sh"))
     + [{"hooks":[{"type":"command","command":($pd + "/hooks/sessionstart-banner.sh")}]}]

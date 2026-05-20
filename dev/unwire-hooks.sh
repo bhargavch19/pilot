@@ -24,11 +24,12 @@ jq --arg pd "$PLUGIN_DIR" '
 
   if .hooks == null then . else
     .hooks |=
-      ( (.PreToolUse // [] | drop_pilot("plan-gate.sh") | drop_pilot("pre-commit.sh")) as $p
-      | (.Stop        // [] | drop_pilot("verify-gate.sh"))                            as $s
-      | (.SessionStart // [] | drop_pilot("sessionstart-banner.sh"))                   as $ss
-      | { PreToolUse: $p, Stop: $s, SessionStart: $ss }
-        + (del(.PreToolUse, .Stop, .SessionStart))
+      ( (.PreToolUse   // [] | drop_pilot("plan-gate.sh") | drop_pilot("pre-commit.sh")) as $p
+      | (.Stop         // [] | drop_pilot("verify-gate.sh"))                             as $s
+      | (.SubagentStop // [] | drop_pilot("verify-gate.sh"))                             as $sa
+      | (.SessionStart // [] | drop_pilot("sessionstart-banner.sh"))                     as $ss
+      | { PreToolUse: $p, Stop: $s, SubagentStop: $sa, SessionStart: $ss }
+        + (del(.PreToolUse, .Stop, .SubagentStop, .SessionStart))
       )
     # Drop now-empty hook arrays for cleanliness.
     | .hooks |= with_entries(select(.value | length > 0))

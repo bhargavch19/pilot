@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
-# G1 enforcement: block Edit/Write >20 LOC unless a recent plan exists.
+# G1 enforcement: block large file-mutating tool calls unless a plan exists.
 # Reads JSON tool invocation from stdin (Claude Code PreToolUse format).
+# Handles Edit, Write, MultiEdit, NotebookEdit.
 set -euo pipefail
 
 INPUT=$(cat)
 TOOL=$(echo "$INPUT" | jq -r '.tool_name // .tool // empty' 2>/dev/null || echo "")
 
-if [[ "$TOOL" != "Edit" && "$TOOL" != "Write" ]]; then
-  exit 0
-fi
+# Pick the right line-count expression per tool shape. For MultiEdit we
+# concatenate every edit's new_string so the total counts toward the gate.
+case "$TOOL" in
+  Edit)
+    NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_string // .input.new_string // ""' 2>/dev/null || echo "")
+    ;;
+  Write)
+    NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.content // .input.content // ""' 2>/dev/null || echo "")
+    ;;
+  MultiEdit)
+    NEW_STRING=$(echo "$INPUT" | jq -r '[.tool_input.edits[]?.new_string // empty] | join("\n")' 2>/dev/null || echo "")
+    ;;
+  NotebookEdit)
+    NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_source // .tool_input.content // ""' 2>/dev/null || echo "")
+    ;;
+  *)
+    exit 0
+    ;;
+esac
 
-NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_string // .tool_input.content // .input.new_string // .input.content // ""' 2>/dev/null || echo "")
 LINE_COUNT=$(echo -n "$NEW_STRING" | grep -c '^' || true)
 
 if [[ "$LINE_COUNT" -le 20 ]]; then
