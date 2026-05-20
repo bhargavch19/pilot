@@ -7,9 +7,10 @@ stays extensible through a one-line registry edit.
 
 - **Repository structure:** Claude Code single-plugin marketplace
   (`.claude-plugin/marketplace.json` + `.claude-plugin/plugin.json` at root).
-- **Skill source:** `skills/pilot/`
-- **Hooks:** `hooks/{plan-gate,pre-commit,verify-gate,sessionstart-banner}.sh`
-- **Slash commands:** `commands/pilot-{status,off,off-rails,back-on,bypass,doctor}.md`
+- **Skill source:** `skills/pilot/` — `SKILL.md` (routing playbook) + `registry.md` (single-source-of-truth phase table) + `guardrails.md` (CLAUDE.md → hook mapping) + `playbooks/`.
+- **Hooks:** `hooks/{plan-gate,pre-commit,verify-gate,sessionstart-banner,precompact-anchor,log-skill-invocation}.sh` — wired across PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, PreCompact.
+- **MCPs (bundled):** `context7` (docs) · `playwright` (UI verify) · `github` (review / ship).
+- **Slash commands:** `commands/pilot-{status,off,off-rails,back-on,bypass,doctor}.md`.
 
 See [`CHANGELOG.md`](./CHANGELOG.md) for what shipped in each version and
 [`prereqs.md`](./prereqs.md) for what plugins/skills pilot prefers to route
@@ -63,35 +64,91 @@ on PATH and to see which env vars are set.
 
 Verify with `/pilot-doctor` in any session.
 
-## Dev install (symlink + live edit)
+## Dev install (one command — symlink + live edit)
 
 For hacking on pilot without going through marketplace publishing:
 
 ```bash
 git clone https://github.com/<github-user>/pilot ~/Workspace/claude-skill
-bash ~/Workspace/claude-skill/dev/symlink-pilot.sh    # ~/.claude/skills/pilot -> skills/pilot
-bash ~/Workspace/claude-skill/dev/wire-hooks.sh        # write hook paths into ~/.claude/settings.json
-# restart Claude Code
+bash ~/Workspace/claude-skill/dev/symlink-pilot.sh    # does all 3 steps
+# restart Claude Code, then run /pilot-doctor
 ```
+
+`symlink-pilot.sh` chains three idempotent steps:
+
+1. **Symlink** `skills/pilot` → `~/.claude/skills/pilot` (live edits show up immediately).
+2. **Wire hooks** — `wire-hooks.sh` merges pilot's 6 hook entries into `~/.claude/settings.json` via `jq` (auto-backed up to `settings.json.bak.<ts>`).
+3. **Register MCPs** — `wire-mcps.sh` reads `mcpServers` from `.claude-plugin/plugin.json` and registers `context7` / `playwright` / `github` via `claude mcp add` (skips entries that already exist).
+
+Each step is also runnable atomically (`bash dev/wire-hooks.sh`, `bash dev/wire-mcps.sh`). Use `SKIP_WIRE=1 bash dev/symlink-pilot.sh` to refresh only the symlink without re-running the wiring.
 
 To remove:
 
 ```bash
 bash ~/Workspace/claude-skill/dev/unwire-hooks.sh      # idempotent
+bash ~/Workspace/claude-skill/dev/unwire-mcps.sh       # idempotent
 rm ~/.claude/skills/pilot                              # only if you symlinked
 ```
 
 ## What pilot does
 
-1. **Phase routing.** On any session start or new prompt, pilot reads
-   `skills/pilot/registry.md`, scans the user message for trigger keywords,
-   inspects project state (`.planning/`, `git status`, `git log`), and
-   invokes the right underlying skill via the Skill tool.
-2. **Quality gates.** Four hooks enforce CLAUDE.md-aligned rules — see
-   `skills/pilot/guardrails.md` for the full mapping.
-3. **Stay extensible.** Adding a new skill is a one-line append to
-   `registry.md`. Adding a new guardrail is a hook script plus a test under
-   `tests/hooks/`.
+1. **Literal-name shortcut.** If your prompt literally names a skill or MCP (`context7`, `playwright`, `tdd`, `frontend-design`, `improve-codebase-architecture`, etc.), pilot routes there immediately — skipping keyword-based phase detection. Multi-mention prompts produce a sequenced phase chain. See "How to invoke pilot" below.
+2. **Phase routing.** When no literal name is present, pilot reads `skills/pilot/registry.md`, scans the user message for trigger keywords, inspects project state (`.planning/`, `git status`, `git log`), and invokes the right underlying skill via the Skill tool.
+3. **Quality gates.** Six hooks enforce CLAUDE.md-aligned rules — see `skills/pilot/guardrails.md` for the full mapping.
+4. **Bundled MCPs.** `context7` (docs lookup), `playwright` (UI verify), and `github` (review / ship) start automatically and are surfaced to the Skill tool as `mcp__<name>__*` tools.
+5. **Stay extensible.** Adding a new skill is a one-line append to `registry.md`. Adding a new guardrail is a hook script plus a test under `tests/hooks/`.
+
+## How to invoke pilot
+
+Three invocation tiers, in order of explicit-ness:
+
+### Tier 1 — just describe the work
+
+Pilot's `description` frontmatter contains trigger keywords that Claude Code auto-matches: **build, fix, ship, explore, messy, broken, review**. A normal work prompt is enough — pilot auto-engages on session start and infers the phase from your prompt + project state.
+
+```
+build a scientific-mode toggle for the calc app
+```
+
+### Tier 2 — name your tools explicitly (recommended)
+
+If your prompt literally contains a skill id or MCP name, pilot pre-resolves every named token to a phase on parse — no keyword scoring, no ambiguity. This is the most reliable invocation pattern.
+
+```
+Build feature X.
+Use context7 to confirm the library docs.
+Plan via writing-plans, then TDD it.
+Verify with playwright. Screenshot the result.
+Finally run improve-codebase-architecture.
+```
+
+→ pilot resolves to:
+
+| Prompt token | Routes to |
+|---|---|
+| `context7` | `context7` MCP |
+| `writing-plans` | `superpowers:writing-plans` |
+| `TDD` | `tdd` |
+| `playwright` | `playwright` MCP |
+| `improve-codebase-architecture` | that skill |
+
+Five-phase chain, no clarifying questions.
+
+**Match rules:**
+- Multi-word skill names must appear as one hyphenated token (`improve-codebase-architecture`, not "improve codebase architecture").
+- Namespace prefixes are optional — `frontend-design` resolves to `frontend-design:frontend-design`; `writing-plans` to `superpowers:writing-plans`.
+- Case-insensitive (`TDD`, `tdd`, `Tdd` all match).
+- Generic vocabulary doesn't count: "design the UI" does not match `frontend-design` because the literal hyphenated token is absent.
+
+### Tier 3 — force-prefix with `pilot:`
+
+When the work has no obvious trigger keywords but you still want pilot to engage:
+
+```
+pilot: think through whether to extract this into a separate package
+```
+
+The literal `pilot:` prefix overrides phase ambiguity and pushes pilot to route even on exploratory prompts.
 
 ## Bypass
 
