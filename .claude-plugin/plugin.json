@@ -6,8 +6,17 @@
     "name": "Bhargav Chelluboina"
   },
   "license": "MIT",
-  "keywords": ["workflow", "conductor", "tdd", "guardrails", "routing"],
+  "keywords": ["workflow", "conductor", "tdd", "guardrails", "routing", "mcp", "context7"],
   "skills": "./skills/",
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY:-}"
+      }
+    }
+  },
   "hooks": {
     "PreToolUse": [
       {
