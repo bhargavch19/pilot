@@ -1,0 +1,75 @@
+name: tests
+
+on:
+  push:
+    branches: [main, feat/**]
+  pull_request:
+
+jobs:
+  hook-tests:
+    name: hook tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq (ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update -qq && sudo apt-get install -y jq
+
+      - name: Install jq (macos)
+        if: matrix.os == 'macos-latest'
+        run: |
+          command -v jq >/dev/null || brew install jq
+
+      - name: Show toolchain
+        run: |
+          bash --version | head -1
+          jq --version
+          git --version
+
+      - name: Run hook + dev tests
+        run: bash tests/run.sh
+
+  shellcheck:
+    name: shellcheck (hooks + dev)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: shellcheck hooks/
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: 'hooks'
+          severity: warning
+
+      - name: shellcheck dev/
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: 'dev'
+          severity: warning
+
+  plugin-manifest:
+    name: validate plugin.json + marketplace.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update -qq && sudo apt-get install -y jq
+
+      - name: plugin.json is valid JSON
+        run: jq empty .claude-plugin/plugin.json
+
+      - name: marketplace.json is valid JSON
+        run: jq empty .claude-plugin/marketplace.json
+
+      - name: required fields present
+        run: |
+          jq -e '.name and .version and .description and .license and .hooks' \
+            .claude-plugin/plugin.json
+          jq -e '.name and .owner and (.plugins | length > 0)' \
+            .claude-plugin/marketplace.json
