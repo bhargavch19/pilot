@@ -67,6 +67,11 @@ component docs via context7…") so the user knows where the info came from.
 Skip if the user is mid-flow and the cost would be more disruptive than the
 risk of stale knowledge.
 
+**Opt-out:** if the env var `PILOT_DISABLE_CONTEXT7` is set (any non-empty
+value), skip the docs-lookup phase entirely. Acknowledge the limitation
+briefly ("docs-lookup disabled — using training-data knowledge for this
+library; you can `unset PILOT_DISABLE_CONTEXT7` to re-enable").
+
 ## Phase recognition cheatsheet
 
 | Signal | Phase |
@@ -119,10 +124,15 @@ After picking a phase + skill, append one terse line to
 `${XDG_CACHE_HOME:-~/.cache}/pilot/routing.log` via a single Bash call:
 
 ```bash
-mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/pilot" && \
-  printf '%s phase=<N>.<name> skill=<routed-skill> trigger=<keyword>\n' \
-  "$(date -u +%FT%TZ)" \
-  >> "${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log"
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log"
+mkdir -p "$(dirname "$LOG")"
+printf '%s phase=<N>.<name> skill=<routed-skill> trigger=<keyword>\n' \
+  "$(date -u +%FT%TZ)" >> "$LOG"
+# Keep the file from growing forever: cap at the last 500 lines.
+# Cheap and runs every append since the file stays small.
+if [[ $(wc -l < "$LOG") -gt 500 ]]; then
+  tail -500 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+fi
 ```
 
 This lets `/pilot-status` show recent routing choices for debugging.
