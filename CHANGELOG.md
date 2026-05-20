@@ -4,6 +4,38 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.4.0] — 2026-05-20
+
+Resolves the four items deferred from the 0.3.0 audit pass: bypass
+semantics, compaction survival, real-payload verification, and the
+publishing placeholder.
+
+### Added
+- **PreCompact anchor hook.** `hooks/precompact-anchor.sh` fires on
+  context compaction and prints routing rules, active guardrails,
+  current bypass state, and the last 5 routing log entries. The
+  output is injected as system-reminder text into the post-compact
+  context, so pilot's routing logic survives `/compact` and
+  auto-compaction. Wired in plugin.json + dev/wire-hooks.sh.
+- **Per-gate bypass markers.** `bypass-precommit-once` (mirrors the
+  existing `bypass-no-plan-once`) lets `/pilot-bypass --no-precommit`
+  skip exactly one pre-commit fire without disturbing a concurrent
+  `/pilot-off` aimed at the next plan-gate. Each hook now consumes
+  its own marker before the shared `bypass-once`.
+- **`/pilot-bypass --no-precommit`** slash command flag.
+- **`dev/dry-run.sh`** — end-to-end simulation that stands up a
+  throwaway repo + cache dir, feeds each hook the documented Claude
+  Code payload shape, and verifies the expected decision. 17
+  scenarios. Wired into CI right after `tests/run.sh`.
+- **`dev/finalize-readme.sh`** — substitutes the `<github-user>`
+  placeholder in the README. Uses `gh api user --jq .login` when
+  authed, or accepts the handle as an argument.
+
+### Changed
+- guardrails.md bypass table now lists both `--no-plan` and
+  `--no-precommit`, and explains the per-gate-before-shared
+  consumption order.
+
 ## [0.3.0] — 2026-05-20
 
 Second audit pass. Closes the gaps the first cleanup missed: matcher
