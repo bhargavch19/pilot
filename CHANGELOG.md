@@ -4,6 +4,34 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.5.0] — 2026-05-20
+
+First bundled MCP server. Pilot now ships with `context7` so Claude can
+fetch current library docs on demand without extra setup.
+
+### Added
+- **`context7` MCP server bundled.** `plugin.json` declares
+  `mcpServers.context7` pointing at `@upstash/context7-mcp` via `npx`,
+  so installing pilot auto-starts the server. Two tools become available:
+  `mcp__context7__resolve-library-id` and
+  `mcp__context7__get-library-docs`. Free tier works without an API key;
+  set `CONTEXT7_API_KEY` for higher rate limits.
+- **Registry entry for docs lookup.** `skills/pilot/registry.md` gains a
+  "Docs lookup" row routed to context7, plus an always-on layer bullet.
+  Triggers: library + version names, "use latest docs", "context7", or
+  any phase where the agent is about to touch an unfamiliar API.
+- **SKILL.md routing guidance for context7.** Tells Claude to invoke
+  context7 *proactively* in Plan/Build/Debug phases, mention once that
+  it's pulling fresh docs, and skip when the disruption cost is high.
+- **prereqs.md "Bundled MCP servers" section.** Documents context7
+  + API key + the new soft `node`/`npx` requirement.
+- **`dev/check-prereqs.sh`** checks `npx` and reports
+  `CONTEXT7_API_KEY` presence.
+
+### Changed
+- README install paragraph now mentions PreCompact (was missed in 0.4.0)
+  and the bundled context7 MCP.
+
 ## [0.4.0] — 2026-05-20
 
 Resolves the four items deferred from the 0.3.0 audit pass: bypass
