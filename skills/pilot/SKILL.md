@@ -31,6 +31,23 @@ When invoked at SessionStart (or first turn of a session), emit one line:
 5. **Invoke the primary skill** for that phase via the Skill tool. Do NOT inline the underlying skill's logic.
 6. **Apply guardrails** before any code action — see `guardrails.md`.
 
+## Fallback when a routed skill is missing
+
+The registry lists a `primary` skill plus `fallbacks` per phase. The user's
+environment may not have every skill installed (pilot ships with no hard
+dependencies). Before invoking, check the available-skills list:
+
+1. **Primary present** → invoke it.
+2. **Primary missing, fallbacks present** → invoke the first available fallback.
+   Briefly say which fallback you picked and why ("`gsd-plan-phase` not
+   installed, using `superpowers:writing-plans`").
+3. **All missing** → explain the gap to the user and point at `prereqs.md`.
+   Do **not** attempt to inline the skill's logic from memory — it's safer
+   to ask the user to install the skill than to wing it.
+
+For `claude-mem:*` and other plugin-bundled skills, the namespace prefix
+(`claude-mem:`) must be present in the available-skills list before invoking.
+
 ## Phase recognition cheatsheet
 
 | Signal | Phase |
