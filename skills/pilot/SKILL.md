@@ -72,6 +72,57 @@ value), skip the docs-lookup phase entirely. Acknowledge the limitation
 briefly ("docs-lookup disabled — using training-data knowledge for this
 library; you can `unset PILOT_DISABLE_CONTEXT7` to re-enable").
 
+## playwright — bundled browser-driving MCP
+
+Pilot ships with the `@playwright/mcp` MCP server. Use it **proactively
+in the Verify phase whenever a Build (UI) phase preceded it**. The whole
+point of the verify-gate is "claim done only with evidence"; for UI work,
+the evidence has to be a real interaction, not just a passing test.
+
+Common tools:
+- `mcp__playwright__browser_navigate` — open a URL.
+- `mcp__playwright__browser_snapshot` — accessibility-tree dump of the page.
+- `mcp__playwright__browser_click` / `browser_type` / `browser_fill_form`.
+- `mcp__playwright__browser_evaluate` — run JS in the page (assertions, state).
+- `mcp__playwright__browser_take_screenshot` — capture a visual record.
+
+Workflow for UI Verify: navigate to the dev server URL → snapshot → click
+through the new flow → assert via `browser_evaluate` or another snapshot.
+Then state the verification result in the transcript so verify-gate finds
+the evidence and stays silent.
+
+**First-run cost:** Playwright auto-downloads its own Chromium (~300MB)
+the first time `browser_navigate` is called. Warn the user once if you
+detect a slow first invocation, then proceed.
+
+**Opt-out:** if `PILOT_DISABLE_PLAYWRIGHT` is set, skip browser-driven
+verification and fall back to test-runner output only.
+
+## github — bundled GitHub-API MCP
+
+Pilot ships with the official `@modelcontextprotocol/server-github` MCP.
+Use it in **Review and Ship phases** when you need real GitHub state
+instead of inferring from local git: PR review status, CI check results,
+merge eligibility, issue/PR threads, branch protection.
+
+Common tools:
+- `mcp__github__get_pull_request` — full PR object.
+- `mcp__github__list_pull_request_reviews` / `create_pull_request_review`.
+- `mcp__github__list_issue_comments` / `create_issue_comment`.
+- `mcp__github__search_issues` / `search_code`.
+- `mcp__github__get_pull_request_status` — combined CI check status.
+
+Workflow for Ship: read PR review state → confirm checks green →
+post final summary comment → merge (with user confirmation).
+
+**Auth:** writes require `GITHUB_TOKEN` exported in the shell before
+launching Claude Code. Reads on public repos work without one. If a
+write call returns 401/403, surface the token-missing hint and ask
+the user to export one before retrying.
+
+**Opt-out:** if `PILOT_DISABLE_GITHUB` is set, skip GitHub MCP calls
+and fall back to `gh` CLI invocations via Bash.
+
 ## Phase recognition cheatsheet
 
 | Signal | Phase |

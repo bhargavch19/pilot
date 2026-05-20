@@ -21,12 +21,16 @@
 | 9. Capture | post-ship; end of phase | _claude-mem plugin auto-hook (not skill-invokable)_ | `gsd-extract-learnings` | runs automatically |
 | Meta. Skill authoring | "create skill"; "new skill"; "write a skill"; "edit skill" | `skill-creator:skill-creator` | `write-a-skill` (superpowers), `superpowers:writing-skills` | meta-tooling — runs outside phase loop |
 | Docs lookup | "use latest docs"; "how does X work in vY.Z"; "context7"; library name + version | `context7` MCP (`mcp__context7__resolve-library-id` + `get-library-docs`) | training-data fallback (acknowledge cutoff) | invoke any time the agent is about to use an unfamiliar API or the user names a library + version |
+| UI verify | UI tasks reaching Verify phase; "test in browser"; "does it actually work"; "screenshot the change" | `playwright` MCP (`mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_click`, `browser_evaluate`, ...) | `superpowers:verification-before-completion` (test-runner only — no browser) | invoke proactively after Build (UI) completes, before claiming the change works |
+| GitHub ops | "PR"; "CI status"; "review state"; "merge readiness"; "post comment"; "list issues" | `github` MCP (`mcp__github__list_pull_requests`, `get_pull_request`, `create_pull_request_review`, `create_issue_comment`, ...) | `gh` CLI via Bash | when Review/Ship phase needs real GitHub data instead of inferring from local git |
 
 ## Always-on layer
 
 - `context-mode` — output discipline (large tool output → sandbox). No opt-in needed.
 - `caveman` — communication style (terse, no filler). Active by default per Bhargav's CLAUDE.md.
 - `context7` MCP — bundled with pilot. Use proactively whenever a Plan/Build/Debug phase touches a library the agent might be hazy on. Free tier works without an API key; set `CONTEXT7_API_KEY` for higher rate limits.
+- `playwright` MCP — bundled with pilot. Use proactively in the Verify phase after any UI change. Drive the browser, snapshot, click through the new flow, then claim done with the evidence in the transcript.
+- `github` MCP — bundled with pilot. Use in Review and Ship phases whenever you need real GitHub state (PR status, review approvals, CI checks, issue threads). Requires `GITHUB_TOKEN` in the shell env for writes; read-only public access works without one.
 
 ## Resolution priority (when multiple options apply)
 
