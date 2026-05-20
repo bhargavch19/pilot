@@ -23,9 +23,21 @@ to see what's installed and what's missing.
 Pilot's `plugin.json` declares one MCP server. Claude Code starts it
 automatically on plugin install.
 
-| Server | Purpose | API key |
+| Server | Version | Purpose |
 |---|---|---|
-| `context7` (`@upstash/context7-mcp`) | Up-to-date library docs (resolve-library-id + get-library-docs tools). Pilot routes here on any "use latest docs / how does X work in version Y" query. | Optional. `CONTEXT7_API_KEY` env var raises rate limits. |
+| `context7` (`@upstash/context7-mcp`) | pinned `@2.2.5` | Up-to-date library docs (`resolve-library-id` + `get-library-docs` tools). Pilot routes here on any "use latest docs / how does X work in version Y" query. |
+
+**Env vars** for bundled MCP servers are read from Claude Code's process
+environment (no per-plugin env block). To pass an API key, export it in
+your shell **before** launching Claude Code:
+
+```bash
+export CONTEXT7_API_KEY="your-key-here"   # optional — free tier works without
+# then start claude code as usual
+```
+
+**Opt-out:** set `PILOT_DISABLE_CONTEXT7=1` and pilot's SKILL.md tells
+Claude to skip the docs-lookup phase entirely.
 
 ## Skills / plugins
 

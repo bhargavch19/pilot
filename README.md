@@ -31,13 +31,26 @@ In Claude Code:
 /plugin install pilot@pilot
 ```
 
-Restart Claude Code. All five hooks (PreToolUse on Edit/Write/MultiEdit/
-NotebookEdit + Bash, Stop, SubagentStop, SessionStart, PreCompact) wire
-automatically via the plugin manifest. The slash commands become available,
-the SessionStart banner shows the active version + a first-run hint
-pointing at `/pilot-doctor`, and the bundled `context7` MCP server starts
-in the background for on-demand library doc lookups (set
-`CONTEXT7_API_KEY` for higher rate limits — optional).
+Restart Claude Code. All five hook events (PreToolUse on Edit/Write/
+MultiEdit/NotebookEdit + Bash, Stop, SubagentStop, SessionStart, PreCompact)
+wire automatically via the plugin manifest. The slash commands become
+available, the SessionStart banner shows the active version + a first-run
+hint pointing at `/pilot-doctor`, and the bundled MCP servers start in the
+background for on-demand tools.
+
+**First-run delay:** the first time each MCP server is needed, `npx` pulls
+the package (~3MB for context7, takes a few seconds). Subsequent sessions
+reuse the cached install.
+
+**API keys:** export in your shell before launching Claude Code (no
+per-plugin env block — keeps the manifest portable):
+
+```bash
+export CONTEXT7_API_KEY="…"   # optional, raises context7 rate limits
+```
+
+**Opt-out:** `export PILOT_DISABLE_CONTEXT7=1` to make Claude skip the
+docs-lookup phase entirely.
 
 Verify with `/pilot-doctor` in any session.
 
