@@ -71,10 +71,27 @@ echo
 
 # --- Bundled MCP servers ---
 echo "Bundled MCP servers:"
-if [[ -n "${CONTEXT7_API_KEY:-}" ]]; then
+# context7
+if [[ -n "${PILOT_DISABLE_CONTEXT7:-}" ]]; then
+  printf "  %s context7%s (PILOT_DISABLE_CONTEXT7 set — routing skipped)%s\n" "$(mark_warn)" "$DIM" "$RESET"
+elif [[ -n "${CONTEXT7_API_KEY:-}" ]]; then
   printf "  %s context7%s (CONTEXT7_API_KEY set — higher rate limits)%s\n" "$(mark_ok)" "$DIM" "$RESET"
 else
   printf "  %s context7%s (free tier — set CONTEXT7_API_KEY for higher limits)%s\n" "$(mark_warn)" "$DIM" "$RESET"
+fi
+# playwright
+if [[ -n "${PILOT_DISABLE_PLAYWRIGHT:-}" ]]; then
+  printf "  %s playwright%s (PILOT_DISABLE_PLAYWRIGHT set — UI verify disabled)%s\n" "$(mark_warn)" "$DIM" "$RESET"
+else
+  printf "  %s playwright%s (browser auto-downloads on first navigate, ~300MB)%s\n" "$(mark_ok)" "$DIM" "$RESET"
+fi
+# github
+if [[ -n "${PILOT_DISABLE_GITHUB:-}" ]]; then
+  printf "  %s github%s (PILOT_DISABLE_GITHUB set — falling back to gh CLI)%s\n" "$(mark_warn)" "$DIM" "$RESET"
+elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  printf "  %s github%s (GITHUB_TOKEN set — full write access)%s\n" "$(mark_ok)" "$DIM" "$RESET"
+else
+  printf "  %s github%s (no GITHUB_TOKEN — public reads only, writes 401)%s\n" "$(mark_warn)" "$DIM" "$RESET"
 fi
 echo
 

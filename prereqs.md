@@ -25,19 +25,32 @@ automatically on plugin install.
 
 | Server | Version | Purpose |
 |---|---|---|
-| `context7` (`@upstash/context7-mcp`) | pinned `@2.2.5` | Up-to-date library docs (`resolve-library-id` + `get-library-docs` tools). Pilot routes here on any "use latest docs / how does X work in version Y" query. |
+| `context7` (`@upstash/context7-mcp`) | pinned `@2.2.5` | Up-to-date library docs (`resolve-library-id` + `get-library-docs` tools). |
+| `playwright` (`@playwright/mcp`) | pinned `@0.0.75` | Browser-driving tools (navigate, snapshot, click, evaluate, screenshot) for real UI verification in the Verify phase. First-run downloads its own Chromium (~300MB). |
+| `github` (`@modelcontextprotocol/server-github`) | pinned `@2025.4.8` | GitHub REST as MCP tools (PRs, reviews, CI status, issues). Used in Review/Ship phases. |
 
 **Env vars** for bundled MCP servers are read from Claude Code's process
 environment (no per-plugin env block). To pass an API key, export it in
 your shell **before** launching Claude Code:
 
 ```bash
-export CONTEXT7_API_KEY="your-key-here"   # optional — free tier works without
+export CONTEXT7_API_KEY="…"   # optional — free tier works without
+export GITHUB_TOKEN="…"        # required for any github MCP write op
 # then start claude code as usual
 ```
 
-**Opt-out:** set `PILOT_DISABLE_CONTEXT7=1` and pilot's SKILL.md tells
-Claude to skip the docs-lookup phase entirely.
+**Per-server opt-outs:** set any of these env vars to disable the
+matching MCP routing in pilot's SKILL.md guidance:
+
+| Env var | Effect |
+|---|---|
+| `PILOT_DISABLE_CONTEXT7=1` | Skip docs-lookup phase; use training-data knowledge. |
+| `PILOT_DISABLE_PLAYWRIGHT=1` | Skip browser-driven verification; rely on test-runner output. |
+| `PILOT_DISABLE_GITHUB=1` | Skip GitHub MCP; fall back to `gh` CLI. |
+
+**Alternative to playwright:** `chrome-devtools-mcp` is lighter (no
+Chromium download, attaches to your existing Chrome). Drop the playwright
+entry in `plugin.json` and add a chrome-devtools one if you prefer.
 
 ## Skills / plugins
 

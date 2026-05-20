@@ -38,19 +38,28 @@ available, the SessionStart banner shows the active version + a first-run
 hint pointing at `/pilot-doctor`, and the bundled MCP servers start in the
 background for on-demand tools.
 
-**First-run delay:** the first time each MCP server is needed, `npx` pulls
-the package (~3MB for context7, takes a few seconds). Subsequent sessions
-reuse the cached install.
+**Bundled MCP servers** (all pinned, all start automatically):
 
-**API keys:** export in your shell before launching Claude Code (no
-per-plugin env block — keeps the manifest portable):
+| Server | Pinned version | First-run cost | Used in phases |
+|---|---|---|---|
+| `context7` | `@2.2.5` | ~3MB npx fetch | Docs lookup (any) |
+| `playwright` | `@0.0.75` | ~3MB npx + ~300MB Chromium on first navigate | Verify (UI) |
+| `github` | `@2025.4.8` | ~10MB npx fetch | Review · Ship |
+
+**API keys + opt-outs** — export in your shell before launching Claude Code:
 
 ```bash
-export CONTEXT7_API_KEY="…"   # optional, raises context7 rate limits
+export CONTEXT7_API_KEY="…"      # optional — raises context7 rate limits
+export GITHUB_TOKEN="…"          # required for any github MCP write op
+
+# Per-server opt-outs (set to 1 to skip that MCP's routing):
+export PILOT_DISABLE_CONTEXT7=1
+export PILOT_DISABLE_PLAYWRIGHT=1
+export PILOT_DISABLE_GITHUB=1
 ```
 
-**Opt-out:** `export PILOT_DISABLE_CONTEXT7=1` to make Claude skip the
-docs-lookup phase entirely.
+Run `/pilot-doctor` after install to confirm all three MCP commands are
+on PATH and to see which env vars are set.
 
 Verify with `/pilot-doctor` in any session.
 
