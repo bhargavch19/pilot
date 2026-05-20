@@ -93,3 +93,19 @@ For multi-step phase combinations, see:
 - **Route** when: phase is clear from keywords + project state; trigger matches one row in registry decisively.
 
 Default: route. Ask only when a guardrail forces it (e.g., G1 needs scope to be known before plan vs build).
+
+## Routing telemetry (optional)
+
+After picking a phase + skill, append one terse line to
+`${XDG_CACHE_HOME:-~/.cache}/pilot/routing.log` via a single Bash call:
+
+```bash
+mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/pilot" && \
+  printf '%s phase=<N>.<name> skill=<routed-skill> trigger=<keyword>\n' \
+  "$(date -u +%FT%TZ)" \
+  >> "${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log"
+```
+
+This lets `/pilot-status` show recent routing choices for debugging.
+Skip the log write when a bypass marker is armed (no need to log a
+no-op turn) and never log secrets / file paths beyond the skill name.

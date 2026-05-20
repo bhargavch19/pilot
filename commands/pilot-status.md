@@ -23,7 +23,13 @@ The user wants a status snapshot of pilot. Print, in this order:
    - `bypass-no-plan-once` → next plan-gate fire only.
    - `bypass-session` → session-long bypass active.
 
-3. **Prereqs** — run `bash ${CLAUDE_PLUGIN_ROOT:-$HOME/Workspace/claude-skill}/dev/check-prereqs.sh`
+3. **Recent routing decisions** — run:
+   ```bash
+   LOG="${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log"
+   [[ -f "$LOG" ]] && tail -10 "$LOG" || echo '(no routing log yet)'
+   ```
+
+4. **Prereqs** — run `bash ${CLAUDE_PLUGIN_ROOT:-$HOME/Workspace/claude-skill}/dev/check-prereqs.sh`
    and quote the bottom-line result.
 
 Be terse. End with one line telling the user how to bypass
