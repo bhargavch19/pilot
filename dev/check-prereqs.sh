@@ -4,11 +4,15 @@
 # advisory and never block.
 set -euo pipefail
 
-GREEN=$(tput setaf 2 2>/dev/null || echo "")
-YELLOW=$(tput setaf 3 2>/dev/null || echo "")
-RED=$(tput setaf 1 2>/dev/null || echo "")
-DIM=$(tput dim 2>/dev/null || echo "")
-RESET=$(tput sgr0 2>/dev/null || echo "")
+if [[ -t 1 ]]; then
+  GREEN=$(tput setaf 2 2>/dev/null || echo "")
+  YELLOW=$(tput setaf 3 2>/dev/null || echo "")
+  RED=$(tput setaf 1 2>/dev/null || echo "")
+  DIM=$(tput dim 2>/dev/null || echo "")
+  RESET=$(tput sgr0 2>/dev/null || echo "")
+else
+  GREEN="" YELLOW="" RED="" DIM="" RESET=""
+fi
 
 mark_ok()   { printf "%s✓%s" "$GREEN" "$RESET"; }
 mark_warn() { printf "%s○%s" "$YELLOW" "$RESET"; }
@@ -32,7 +36,8 @@ skill_installed() {
   # plugin-bundled skills/<name>/SKILL.md under any cached plugin.
   [[ -f "$SKILLS_DIR/$1/SKILL.md" ]] && return 0
   if [[ -d "$PLUGINS_CACHE" ]]; then
-    find "$PLUGINS_CACHE" -maxdepth 8 -type f -path "*/skills/$1/SKILL.md" 2>/dev/null \
+    # No maxdepth — some plugins nest skills deeper than the default 5/8.
+    find "$PLUGINS_CACHE" -type f -path "*/skills/$1/SKILL.md" 2>/dev/null \
       | grep -q . && return 0
   fi
   return 1
