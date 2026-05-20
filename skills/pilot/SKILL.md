@@ -70,6 +70,7 @@ Run this **only after the Literal-name shortcut produced no match.**
    - `ls .planning/ 2>/dev/null` — GSD project state present?
    - `git status --short 2>/dev/null` — uncommitted work?
    - `git log --oneline -5 2>/dev/null` — recent commits suggest mid-task?
+   - `test -f CLAUDE.md && echo yes || echo no` — repo has been bootstrapped?
 4. **Pick one phase** with the highest signal. If ambiguous, ask one focused question (per CLAUDE.md G4).
 5. **Invoke the primary skill** for that phase via the Skill tool. Do NOT inline the underlying skill's logic.
 6. **Apply guardrails** before any code action — see `guardrails.md`.
@@ -172,6 +173,7 @@ and fall back to `gh` CLI invocations via Bash.
 |---|---|
 | Session opens; user typed nothing yet | 0. Recall |
 | "triage"; "what to work on"; "review the inbox" | 0.5 Triage |
+| no CLAUDE.md; "new project"; "init" | 0.75 Bootstrap |
 | "what if", "idea", "explore" — no code intent | 1. Frame (non-code) |
 | "build X", "add Y", "feature for Z" | 1. Frame (code) → 2. Plan |
 | User has a frame + says "go" or "plan" | 2. Plan |
