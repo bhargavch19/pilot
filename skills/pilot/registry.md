@@ -13,7 +13,7 @@ See `SKILL.md` → "Literal-name shortcut" for the exact rule (scanning conventi
 
 | Phase | Triggers | Primary skill | Fallbacks | Resolution rule |
 |---|---|---|---|---|
-| 0. Recall | session start; "where were we"; "did we already" | `claude-mem:mem-search` | `gsd-resume-work` | always run on SessionStart |
+| 0. Recall | session start; "where were we"; "did we already" | `claude-mem:mem-search` | `gsd-resume-work`, `claude-mem:learn-codebase` | always run on SessionStart; if mem-search returns nothing AND repo is unfamiliar (no prior `claude-mem` index), use `learn-codebase` to prime |
 | 0.5 Triage | "triage"; "what to work on"; "incoming bugs"; "review the inbox"; "issue queue" | `triage` | `gsd-inbox` | fires before Frame when work source is an issue tracker / PR queue |
 | 0.75 Bootstrap | "new project"; "init"; "fresh repo"; no CLAUDE.md present | `init` | `gsd-new-project`, `claude-mem:learn-codebase` | auto-fire when `[ ! -f CLAUDE.md ]` AND no `.planning/` directory AND no prior pilot routing in this repo |
 | 1. Frame (non-code) | "idea"; "what if"; "explore"; "thinking about" | `grill-me` | `gsd-explore` | non-code keywords |
@@ -26,7 +26,7 @@ See `SKILL.md` → "Literal-name shortcut" for the exact rule (scanning conventi
 | 5. Verify | claim of "done"; before commit/PR | `superpowers:verification-before-completion` | `gsd-verify-work`, `gsd-validate-phase` | mandatory before Review |
 | 6. Review | pre-merge; "review this" | `superpowers:requesting-code-review` | `gsd-code-review`, `simplify` | mandatory before Ship |
 | 6.5 Security | "security review"; "audit"; "OWASP"; "vulnerability"; "sanitize"; "injection"; diff touches auth/crypto/network paths | `security-review` | `gsd-secure-phase` | always before Ship if any sensitive-path change |
-| 7. Refactor | "messy"; "hard to change"; "clean up" | `improve-codebase-architecture` | `zoom-out`, `gsd-map-codebase` | scope to current task only |
+| 7. Refactor | "messy"; "hard to change"; "clean up" | `improve-codebase-architecture` | `claude-mem:pathfinder`, `zoom-out`, `gsd-map-codebase` | single-file deepening → improve-codebase-architecture; cross-system unification → pathfinder; scope to current task only |
 | 7.5 Migration | "migration"; "schema change"; "upgrade dep"; "breaking change"; "lockfile bump" | `migration-safety` | `to-issues`, `diagnose` | required before Pre-deploy if `migrations/` or lockfile changed; produces `MIGRATION-SAFETY.md` |
 | 7.75 Pre-deploy | "deploy"; "release"; "ship to prod"; "production"; "go live"; immediately before Ship on a release branch | `pre-deploy-checklist` | `superpowers:requesting-code-review` | fires automatically before Ship for production-targeted branches; produces `PRE-DEPLOY.md` |
 | 8. Ship | "merge"; "PR"; "ship it" | `gsd-ship` | `superpowers:finishing-a-development-branch` | only after Verify + Review |
