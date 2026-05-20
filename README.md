@@ -17,6 +17,11 @@ into.
 
 ## Quick install (marketplace path — recommended)
 
+> **Before publishing:** replace `<github-user>` below with your actual
+> GitHub handle. The repo must be pushed to a public (or accessible)
+> GitHub URL — pilot is a single-plugin marketplace, so the repo IS the
+> marketplace.
+
 In Claude Code:
 
 ```
@@ -24,11 +29,13 @@ In Claude Code:
 /plugin install pilot@pilot
 ```
 
-Restart Claude Code. The four hooks are wired automatically via the plugin
-manifest, the slash commands become available, and the SessionStart banner
-will show the active version.
+Restart Claude Code. All five hooks (PreToolUse on Edit/Write/MultiEdit/
+NotebookEdit + Bash, Stop, SubagentStop, SessionStart) wire automatically
+via the plugin manifest. The slash commands become available, and the
+SessionStart banner shows the active version + a first-run hint pointing
+at `/pilot-doctor`.
 
-Verify by running `/pilot-doctor` in any session.
+Verify with `/pilot-doctor` in any session.
 
 ## Dev install (symlink + live edit)
 

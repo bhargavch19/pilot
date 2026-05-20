@@ -4,6 +4,64 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.3.0] — 2026-05-20
+
+Second audit pass. Closes the gaps the first cleanup missed: matcher
+coverage, distribution polish, and onboarding signals.
+
+### Added
+- **MultiEdit + NotebookEdit gating.** plan-gate matcher is now
+  `Edit|Write|MultiEdit|NotebookEdit`. plan-gate sums all
+  `edits[].new_string` lines for MultiEdit and reads `new_source`
+  for NotebookEdit.
+- **SubagentStop hook.** verify-gate now runs on both `Stop` and
+  `SubagentStop`, so long-running subagents claiming "done" without
+  test evidence get the same nudge.
+- **First-run welcome.** SessionStart banner appends
+  "first run — try /pilot-doctor" on the first install, self-dismisses.
+- **Upgrade notification.** Banner detects a version transition
+  (stored in `${XDG_CACHE_HOME:-~/.cache}/pilot/last-version`) and
+  shows a one-line CHANGELOG pointer.
+- **Routing telemetry.** SKILL.md instructs Claude to append one
+  terse line per routing decision to
+  `${XDG_CACHE_HOME:-~/.cache}/pilot/routing.log`. `/pilot-status`
+  tails the last 10 entries.
+- **CI.** `.github/workflows/test.yml` runs hook tests on
+  ubuntu-latest + macos-latest, shellcheck on `hooks/` and `dev/`,
+  and JSON validation on plugin manifests.
+- **LICENSE.** MIT.
+
+### Fixed
+- **HEREDOC false positive** in pre-commit. `<<<stuff` was tripping
+  the heredoc-bypass detector via overlapping substring match.
+  Tightened regex to require leading boundary + identifier follow.
+- **Escaped-quote handling** in pre-commit. `-m "foo \\"bar\\""` made
+  sed truncate the message; G3 was applied to a bogus prefix. Now
+  the hook detects `\\"` and skips G3 (file checks still run).
+- **Substring-match bypass** in plan-gate / pre-commit phrase
+  detection. `"shutdownpilot off"` should never trip bypass —
+  added `(^|[[:space:]]|[[:punct:]])` leading anchor on every
+  `pilot off / pilot --no-plan / pilot back on` grep.
+- **TTY-escape-code leak** in check-prereqs. tput colors were set
+  unconditionally; piped/captured output had raw ANSI codes. Guard
+  on `[[ -t 1 ]]`.
+- **PLUGINS_CACHE maxdepth** in check-prereqs. Hardcoded `-maxdepth 8`
+  silently missed plugins that nest skills deeper. Removed limit.
+
+### Changed
+- **Dropped YAML config.** `.pilot.yml` support removed from
+  verify-gate; the awk-based parser was fragile. `.pilot.json` is
+  the only per-repo config surface now. Breaking change with zero
+  external users (pre-1.0).
+- plugin.json: added `license: "MIT"`, `skills: "./skills/"`, fixed
+  author surname.
+- Banner now reports active bypass state (one-shot armed vs session-active).
+
+### Distribution
+- `.gitignore` hardened for `settings.local.json`, `settings.json.bak.*`,
+  and `.cache/pilot/`.
+- README: dropped YAML config example; `.pilot.json` only.
+
 ## [0.2.0] — 2026-05-19
 
 Audit-driven cleanup. The pre-1.0 release where every advertised behavior
@@ -66,3 +124,15 @@ is actually wired.
 - `skills/pilot/SKILL.md` adds a "Fallback when a routed skill is missing"
   section so Claude degrades gracefully instead of erroring.
 - `README.md` rewritten for marketplace install as the primary path.
+
+---
+
+## Releasing a new version
+
+1. Bump `version` in `.claude-plugin/plugin.json`.
+2. Prepend a new `## [X.Y.Z] — YYYY-MM-DD` section to this file.
+3. Run `bash tests/run.sh` — must be green.
+4. Commit with `chore(release): vX.Y.Z`.
+5. `git tag vX.Y.Z && git push --tags`.
+6. (Optional, if installed) `/claude-mem:version-bump` automates
+   plugin.json + CHANGELOG + tag + GitHub release in one step.
