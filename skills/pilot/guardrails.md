@@ -89,12 +89,17 @@ into `~/.claude/settings.json` using absolute paths.
 
 | Form | Effect | Implementation |
 |---|---|---|
-| `/pilot-off` | Next gate fire only | Writes `bypass-once` marker; hooks consume on fire. |
-| `/pilot-bypass --no-plan` | Next plan-gate only | Writes `bypass-no-plan-once`. |
-| `/pilot-off-rails` | Until `/pilot-back-on` | Writes `bypass-session`, hooks honor without consuming. |
-| `/pilot-back-on` | Re-engage | Removes all markers. |
+| `/pilot-off` | Next gate fire of any kind | Writes `bypass-once`; whichever gate (plan-gate or pre-commit) fires first consumes it. |
+| `/pilot-bypass --no-plan` | Next plan-gate fire only | Writes `bypass-no-plan-once`. Plan-gate consumes this before `bypass-once`. |
+| `/pilot-bypass --no-precommit` | Next pre-commit fire only | Writes `bypass-precommit-once`. Pre-commit consumes this before `bypass-once`. |
+| `/pilot-off-rails` | Until `/pilot-back-on` | Writes `bypass-session`; hooks honor without consuming. |
+| `/pilot-back-on` | Re-engage | Removes every marker. |
 | `pilot off` in user msg | Next gate fire | Transcript-grep fallback. |
 | `pilot off rails` in user msg | Until "pilot back on" | Transcript-grep with state tracking. |
+
+Per-gate markers are preferred over the shared `bypass-once` when both
+are armed — so a `--no-precommit` doesn't accidentally swallow a
+`/pilot-off` intended for the next plan-gate fire in the same turn.
 
 The marker-file path can be overridden via `XDG_CACHE_HOME`.
 

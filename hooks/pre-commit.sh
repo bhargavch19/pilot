@@ -22,13 +22,17 @@ if ! [[ "$CMD" =~ (^|[^a-zA-Z])git[[:space:]]+commit([[:space:]]|$) ]]; then
   exit 0
 fi
 
-# Bypass via marker files (written by /pilot-off / /pilot-off-rails).
+# Bypass via marker files. Per-gate markers (bypass-precommit-once) are
+# checked first so a /pilot-bypass --no-precommit doesn't accidentally
+# eat a /pilot-off intended for the next plan-gate fire in the same turn.
 BYPASS_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/pilot"
-if [[ -f "$BYPASS_DIR/bypass-once" ]]; then
-  rm -f "$BYPASS_DIR/bypass-once"
-  echo "pre-commit: bypassed (bypass-once consumed)." >&2
-  exit 0
-fi
+for m in bypass-precommit-once bypass-once; do
+  if [[ -f "$BYPASS_DIR/$m" ]]; then
+    rm -f "$BYPASS_DIR/$m"
+    echo "pre-commit: bypassed ($m consumed)." >&2
+    exit 0
+  fi
+done
 if [[ -f "$BYPASS_DIR/bypass-session" ]]; then
   echo "pre-commit: bypassed (session bypass active)." >&2
   exit 0
