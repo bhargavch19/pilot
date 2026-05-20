@@ -25,9 +25,12 @@ else
   echo '{}' > "$SETTINGS"
 fi
 
-# Merge hooks. Use jq for safety. Idempotent dedup of pilot entries by script basename.
+# Merge hooks. Use jq for safety. Idempotent dedup of pilot entries by
+# basename ONLY — not by current PLUGIN_DIR. If a previous wire-hooks run
+# wrote an entry from a different path (e.g. a moved/stale symlink), this
+# still catches it so we don't accumulate duplicates.
 jq --arg pd "$PLUGIN_DIR" '
-  def is_pilot($name): .command? // "" | endswith("/hooks/" + $name) and contains($pd);
+  def is_pilot($name): .command? // "" | endswith("/hooks/" + $name);
   def drop_pilot($name): map(select((.hooks[]? | is_pilot($name)) | not));
   .hooks = (.hooks // {}) |
   .hooks.PreToolUse = ((.hooks.PreToolUse // []) | drop_pilot("plan-gate.sh") | drop_pilot("pre-commit.sh"))

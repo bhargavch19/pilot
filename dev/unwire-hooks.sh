@@ -19,7 +19,8 @@ cp "$SETTINGS" "$SETTINGS.bak.$(date +%s)"
 # Drop any hook entry whose command ends in one of pilot's hook script
 # names AND whose path lives under this plugin dir (idempotent dedup).
 jq --arg pd "$PLUGIN_DIR" '
-  def is_pilot($name): .command? // "" | endswith("/hooks/" + $name) and contains($pd);
+  # Match by basename only so stale-path entries get cleaned up too.
+  def is_pilot($name): .command? // "" | endswith("/hooks/" + $name);
   def drop_pilot($name): map(select((.hooks[]? | is_pilot($name)) | not));
 
   if .hooks == null then . else

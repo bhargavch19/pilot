@@ -21,7 +21,9 @@ Run a top-to-bottom pilot health check. Steps:
    done
    ```
 
-3. **settings.json wiring** — run:
+3. **settings.json wiring** — list each wired pilot hook AND verify the
+   command actually resolves to an executable file (catches stale paths
+   left behind by a moved/renamed plugin dir):
    ```bash
    jq -r '
      .hooks // {}
@@ -29,8 +31,23 @@ Run a top-to-bottom pilot health check. Steps:
      | .key as $k
      | .value[]?
      | .hooks[]?
-     | "\($k): \(.command)"
-   ' "$HOME/.claude/settings.json" 2>/dev/null | grep -E '(plan-gate|pre-commit|verify-gate|sessionstart-banner|precompact-anchor)\.sh' \
+     | "\($k)\t\(.command)"
+   ' "$HOME/.claude/settings.json" 2>/dev/null \
+     | grep -E '/hooks/(plan-gate|pre-commit|verify-gate|sessionstart-banner|precompact-anchor)\.sh' \
+     | while IFS=$'\t' read -r event cmd; do
+         path="${cmd%% *}"  # strip any args
+         path="${path#\"}"; path="${path%\"}"  # strip quotes if present
+         if [[ -x "$path" ]]; then
+           echo "✓ $event → $path"
+         elif [[ -f "$path" ]]; then
+           echo "○ $event → $path (present, not executable)"
+         else
+           echo "✗ $event → $path (BROKEN — file missing; run dev/unwire-hooks then dev/wire-hooks)"
+         fi
+       done
+   # If nothing matched at all:
+   jq -e '.hooks // {} | [.. | objects | .command? // empty] | any(test("/hooks/(plan-gate|pre-commit|verify-gate|sessionstart-banner|precompact-anchor)\\.sh"))' \
+     "$HOME/.claude/settings.json" >/dev/null 2>&1 \
      || echo '(no pilot hooks wired — run dev/wire-hooks.sh or install via marketplace)'
    ```
 
