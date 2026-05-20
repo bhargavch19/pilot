@@ -40,7 +40,9 @@ jq --arg pd "$PLUGIN_DIR" '
   .hooks.SubagentStop = ((.hooks.SubagentStop // []) | drop_pilot("verify-gate.sh"))
     + [{"hooks":[{"type":"command","command":($pd + "/hooks/verify-gate.sh")}]}] |
   .hooks.SessionStart = ((.hooks.SessionStart // []) | drop_pilot("sessionstart-banner.sh"))
-    + [{"hooks":[{"type":"command","command":($pd + "/hooks/sessionstart-banner.sh")}]}]
+    + [{"hooks":[{"type":"command","command":($pd + "/hooks/sessionstart-banner.sh")}]}] |
+  .hooks.PreCompact = ((.hooks.PreCompact // []) | drop_pilot("precompact-anchor.sh"))
+    + [{"hooks":[{"type":"command","command":($pd + "/hooks/precompact-anchor.sh")}]}]
 ' "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
 
 echo "Wired pilot hooks (dev install) into $SETTINGS:"

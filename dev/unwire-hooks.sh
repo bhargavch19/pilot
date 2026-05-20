@@ -28,8 +28,9 @@ jq --arg pd "$PLUGIN_DIR" '
       | (.Stop         // [] | drop_pilot("verify-gate.sh"))                             as $s
       | (.SubagentStop // [] | drop_pilot("verify-gate.sh"))                             as $sa
       | (.SessionStart // [] | drop_pilot("sessionstart-banner.sh"))                     as $ss
-      | { PreToolUse: $p, Stop: $s, SubagentStop: $sa, SessionStart: $ss }
-        + (del(.PreToolUse, .Stop, .SubagentStop, .SessionStart))
+      | (.PreCompact   // [] | drop_pilot("precompact-anchor.sh"))                       as $pc
+      | { PreToolUse: $p, Stop: $s, SubagentStop: $sa, SessionStart: $ss, PreCompact: $pc }
+        + (del(.PreToolUse, .Stop, .SubagentStop, .SessionStart, .PreCompact))
       )
     # Drop now-empty hook arrays for cleanliness.
     | .hooks |= with_entries(select(.value | length > 0))

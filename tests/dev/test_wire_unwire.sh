@@ -44,6 +44,10 @@ if ! jq -e '.hooks.SessionStart | map(.hooks[].command) | map(endswith("/hooks/s
   echo "FAIL: sessionstart-banner.sh not wired"
   exit 1
 fi
+if ! jq -e '.hooks.PreCompact | map(.hooks[].command) | map(endswith("/hooks/precompact-anchor.sh")) | any' "$TMP/.claude/settings.json" >/dev/null; then
+  echo "FAIL: precompact-anchor.sh not wired"
+  exit 1
+fi
 # matcher should include MultiEdit and NotebookEdit
 if ! jq -e '.hooks.PreToolUse | map(select(.matcher | contains("MultiEdit") and contains("NotebookEdit"))) | length > 0' "$TMP/.claude/settings.json" >/dev/null; then
   echo "FAIL: plan-gate matcher missing MultiEdit/NotebookEdit"
