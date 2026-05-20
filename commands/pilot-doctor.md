@@ -52,18 +52,34 @@ Run a top-to-bottom pilot health check. Steps:
    ```
 
 4. **MCP servers** — for each entry in plugin.json's mcpServers, verify the
-   command is runnable and report the pinned version:
+   command is runnable, AND each declared server is actually registered
+   with Claude Code (marketplace install does this for you; dev installs
+   need `bash dev/wire-mcps.sh`):
    ```bash
    ROOT="${CLAUDE_PLUGIN_ROOT:-$HOME/Workspace/claude-skill}"
+   unregistered=0
    jq -r '.mcpServers // {} | to_entries[] | "\(.key)\t\(.value.command)\t\((.value.args // []) | join(" "))"' \
      "$ROOT/.claude-plugin/plugin.json" \
      | while IFS=$'\t' read -r name cmd args; do
-         if command -v "$cmd" >/dev/null 2>&1; then
-           echo "✓ $name ($cmd $args)"
-         else
-           echo "✗ $name — $cmd not on PATH"
+         runnable="✗"; command -v "$cmd" >/dev/null 2>&1 && runnable="✓"
+         registered="✗"
+         if command -v claude >/dev/null 2>&1 && claude mcp get "$name" >/dev/null 2>&1; then
+           registered="✓"
          fi
+         echo "$runnable runnable, $registered registered — $name ($cmd $args)"
        done
+   # If any are runnable-but-unregistered, point at the dev wiring script.
+   if command -v claude >/dev/null 2>&1; then
+     missing=$(jq -r '.mcpServers // {} | keys[]' "$ROOT/.claude-plugin/plugin.json" \
+       | while read -r n; do claude mcp get "$n" >/dev/null 2>&1 || echo "$n"; done)
+     if [[ -n "$missing" ]]; then
+       echo
+       echo "⚠ declared MCPs not registered with Claude Code:"
+       echo "$missing" | sed 's/^/    /'
+       echo "  Fix (dev install): bash $ROOT/dev/wire-mcps.sh"
+       echo "  Fix (marketplace install): /plugin reinstall pilot"
+     fi
+   fi
    ```
    Then check env vars that affect bundled servers:
    ```bash
