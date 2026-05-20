@@ -4,6 +4,21 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.6.1] — 2026-05-20
+
+First-real-dogfood patch — fixes a silent hook-wiring bug found by
+actually running v0.6.0 against a live `~/.claude/settings.json`.
+
+### Fixed
+- **wire-hooks.sh / unwire-hooks.sh dedup was path-prefix sensitive.**
+  After v0.2.0 restructured the repo, old entries in settings.json
+  (pointing at the pre-restructure paths) didn't get cleaned up on
+  rewire — they accumulated as silent dupes. Now dedup matches by
+  basename only.
+- **`/pilot-doctor` now does `test -x` on each wired hook command.**
+  Future stale-path bugs surface as a clear "BROKEN — file missing"
+  line instead of silently passing the existence check.
+
 ## [0.6.0] — 2026-05-20
 
 Production-grade MCP bundle. Pilot now ships three MCP servers covering
