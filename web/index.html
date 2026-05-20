@@ -789,7 +789,7 @@
 <body>
   <div class="page">
     <header>
-      <span class="chip"><span class="chip-dot"></span> pilot v0.6.1</span>
+      <span class="chip"><span class="chip-dot"></span> pilot v0.7.0</span>
       <span></span>
       <span class="header-meta">claude code · single-plugin marketplace</span>
       <a class="header-link" href="https://github.com" target="_blank" rel="noreferrer">github →</a>
@@ -812,6 +812,10 @@
         <div class="pair">
           <dt>trigger</dt>
           <dd>Auto-engages on session start and on prompts containing <strong>build / fix / ship / explore / messy / broken / review</strong>. Naming a skill or MCP literally (<code>context7</code>, <code>playwright</code>, <code>tdd</code>, <code>frontend-design</code>, <code>improve-codebase-architecture</code>) routes there directly — no keyword scoring.</dd>
+        </div>
+        <div class="pair">
+          <dt>phases</dt>
+          <dd>17 routed phases: Recall · Triage · Bootstrap · Frame · Plan · Build · Debug · Performance · Verify · Review · Security · Refactor · Migration · Pre-deploy · Ship · Post-deploy · Capture. Each maps to a primary skill with at least one fallback.</dd>
         </div>
         <div class="pair">
           <dt>how</dt>
@@ -997,6 +1001,7 @@
           <div><code>/pilot-off-rails</code><span class="desc">disable until /pilot-back-on</span></div>
           <div><code>/pilot-back-on</code><span class="desc">re-engage all gates</span></div>
           <div><code>/pilot-status</code><span class="desc">wired hooks · bypass · last routes</span></div>
+          <div><code>/pilot-trace</code><span class="desc">current session's phase chain in order</span></div>
           <div><code>/pilot-doctor</code><span class="desc">full install diagnostic</span></div>
         </div>
       </div>
@@ -1004,7 +1009,7 @@
 
     <footer>
       <span>~/Workspace/claude-skill</span>
-      <span>v0.6.1 · 2026-05-20</span>
+      <span>v0.7.0 · 2026-05-20</span>
     </footer>
   </div>
 

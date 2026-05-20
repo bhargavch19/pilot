@@ -10,7 +10,8 @@ stays extensible through a one-line registry edit.
 - **Skill source:** `skills/pilot/` — `SKILL.md` (routing playbook) + `registry.md` (single-source-of-truth phase table) + `guardrails.md` (CLAUDE.md → hook mapping) + `playbooks/`.
 - **Hooks:** `hooks/{plan-gate,pre-commit,verify-gate,sessionstart-banner,precompact-anchor,log-skill-invocation}.sh` — wired across PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, PreCompact.
 - **MCPs (bundled):** `context7` (docs) · `playwright` (UI verify) · `github` (review / ship).
-- **Slash commands:** `commands/pilot-{status,off,off-rails,back-on,bypass,doctor}.md`.
+- **Bundled skills (this plugin's own):** `migration-safety`, `pre-deploy-checklist`, `post-deploy-monitor` (all under `skills/`). Currently scaffolds — see `docs/superpowers/plans/2026-05-20-production-hardening.md` for completion queue.
+- **Slash commands:** `commands/pilot-{status,off,off-rails,back-on,bypass,doctor,trace}.md`.
 
 See [`CHANGELOG.md`](./CHANGELOG.md) for what shipped in each version and
 [`prereqs.md`](./prereqs.md) for what plugins/skills pilot prefers to route
@@ -150,6 +151,24 @@ pilot: think through whether to extract this into a separate package
 
 The literal `pilot:` prefix overrides phase ambiguity and pushes pilot to route even on exploratory prompts.
 
+## Production phases (v0.7+)
+
+Beyond the core Frame → Plan → Build → Verify → Review → Ship → Capture cycle, pilot routes 7 production-oriented phases at decimal slots:
+
+| Slot | Phase | Primary skill | Fires when |
+|---|---|---|---|
+| 0.5 | Triage | `triage` | "what to work on", incoming bugs, PR queue |
+| 0.75 | Bootstrap | `init` | repo has no CLAUDE.md |
+| 4.5 | Performance | `diagnose` | "slow", "latency", "profile", "regression" |
+| 6.5 | Security | `security-review` | "audit", "OWASP", diff touches auth/crypto/network |
+| 7.5 | Migration | `migration-safety`* | diff touches `migrations/` or lockfile |
+| 7.75 | Pre-deploy | `pre-deploy-checklist`* | immediately before Ship on a release branch |
+| 8.5 | Post-deploy | `post-deploy-monitor`* | after Ship completes |
+
+`*` Scaffold — registers and redirects to a working fallback. Full content in queue (see `docs/superpowers/plans/2026-05-20-production-hardening.md`).
+
+Each phase appears as a row in `skills/pilot/registry.md` with its triggers and fallbacks. Phase ordering is enforced by the **Resolution rule** column — e.g., `7.5 Migration` is required before `7.75 Pre-deploy` if migrations/lockfile changed.
+
 ## Bypass
 
 | When you want to… | Use |
@@ -160,6 +179,7 @@ The literal `pilot:` prefix overrides phase ambiguity and pushes pilot to route 
 | Turn pilot back on | `/pilot-back-on` |
 | Diagnose what's wired and what isn't | `/pilot-doctor` |
 | Quick wired-hooks view | `/pilot-status` |
+| Inspect current session's routing chain | `/pilot-trace` |
 
 Bypass also works via free-text phrases in the user message (`pilot off`,
 `pilot off rails`, `pilot --no-plan`) — handy when typing in a deep
