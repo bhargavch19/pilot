@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-# Idempotently wire pilot hooks into ~/.claude/settings.json.
+# Idempotently wire pilot hooks into ~/.claude/settings.json (dev install only).
 # Backs up original to settings.json.bak.<timestamp> if present.
+#
+# Prefer marketplace install: see top-level README. This script is for
+# contributors hacking on pilot via the symlink-pilot.sh workflow.
 set -euo pipefail
 
 SETTINGS="$HOME/.claude/settings.json"
-PILOT_DIR="$HOME/.claude/skills/pilot"
+PLUGIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-if [[ ! -d "$PILOT_DIR" ]]; then
-  echo "ERROR: $PILOT_DIR not found. Run Task 13 (symlink) first." >&2
+if [[ ! -d "$PLUGIN_DIR/hooks" ]]; then
+  echo "ERROR: $PLUGIN_DIR/hooks not found. Are you in the pilot repo?" >&2
+  exit 1
+fi
+
+if [[ ! -f "$PLUGIN_DIR/.claude-plugin/plugin.json" ]]; then
+  echo "ERROR: $PLUGIN_DIR/.claude-plugin/plugin.json not found." >&2
   exit 1
 fi
 
@@ -17,17 +25,23 @@ else
   echo '{}' > "$SETTINGS"
 fi
 
-# Merge hooks. Use jq for safety.
-jq --arg pd "$PILOT_DIR" '
-  def has_pilot_cmd($name): any(.hooks[]?; .command? // "" | startswith($pd) and endswith($name));
+# Merge hooks. Use jq for safety. Idempotent dedup of pilot entries by script basename.
+jq --arg pd "$PLUGIN_DIR" '
+  def is_pilot($name): .command? // "" | endswith("/hooks/" + $name) and contains($pd);
+  def drop_pilot($name): map(select((.hooks[]? | is_pilot($name)) | not));
   .hooks = (.hooks // {}) |
-  .hooks.PreToolUse = ((.hooks.PreToolUse // []) | map(select(has_pilot_cmd("plan-gate.sh") | not)))
-    + [{"matcher":"Edit|Write","hooks":[{"type":"command","command":($pd + "/hooks/plan-gate.sh")}]}] |
-  .hooks.Stop = ((.hooks.Stop // []) | map(select(has_pilot_cmd("verify-gate.sh") | not)))
+  .hooks.PreToolUse = ((.hooks.PreToolUse // []) | drop_pilot("plan-gate.sh") | drop_pilot("pre-commit.sh"))
+    + [
+        {"matcher":"Edit|Write","hooks":[{"type":"command","command":($pd + "/hooks/plan-gate.sh")}]},
+        {"matcher":"Bash","hooks":[{"type":"command","command":($pd + "/hooks/pre-commit.sh")}]}
+      ] |
+  .hooks.Stop = ((.hooks.Stop // []) | drop_pilot("verify-gate.sh"))
     + [{"hooks":[{"type":"command","command":($pd + "/hooks/verify-gate.sh")}]}] |
-  .hooks.SessionStart = ((.hooks.SessionStart // []) | map(select(has_pilot_cmd("sessionstart-banner.sh") | not)))
+  .hooks.SessionStart = ((.hooks.SessionStart // []) | drop_pilot("sessionstart-banner.sh"))
     + [{"hooks":[{"type":"command","command":($pd + "/hooks/sessionstart-banner.sh")}]}]
 ' "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
 
-echo "Wired hooks into $SETTINGS:"
+echo "Wired pilot hooks (dev install) into $SETTINGS:"
 jq '.hooks' "$SETTINGS"
+echo
+echo "To remove: bash $PLUGIN_DIR/dev/unwire-hooks.sh"

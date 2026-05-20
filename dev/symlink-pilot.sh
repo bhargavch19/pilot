@@ -2,7 +2,7 @@
 # Symlink pilot build dir to ~/.claude/skills/pilot for live editing.
 set -euo pipefail
 
-BUILD="$(cd "$(dirname "$0")/.." && pwd)/pilot"
+BUILD="$(cd "$(dirname "$0")/.." && pwd)/skills/pilot"
 TARGET="$HOME/.claude/skills/pilot"
 
 mkdir -p "$HOME/.claude/skills"

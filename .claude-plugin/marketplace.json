@@ -1,0 +1,13 @@
+{
+  "name": "pilot",
+  "owner": {
+    "name": "Bhargav Chellu"
+  },
+  "plugins": [
+    {
+      "name": "pilot",
+      "source": ".",
+      "description": "Unified AI coding conductor — auto-routes intent to the right skill, enforces CLAUDE.md quality gates."
+    }
+  ]
+}
