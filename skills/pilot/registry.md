@@ -20,11 +20,13 @@
 | 8. Ship | "merge"; "PR"; "ship it" | `gsd-ship` | `superpowers:finishing-a-development-branch` | only after Verify + Review |
 | 9. Capture | post-ship; end of phase | _claude-mem plugin auto-hook (not skill-invokable)_ | `gsd-extract-learnings` | runs automatically |
 | Meta. Skill authoring | "create skill"; "new skill"; "write a skill"; "edit skill" | `skill-creator:skill-creator` | `write-a-skill` (superpowers), `superpowers:writing-skills` | meta-tooling — runs outside phase loop |
+| Docs lookup | "use latest docs"; "how does X work in vY.Z"; "context7"; library name + version | `context7` MCP (`mcp__context7__resolve-library-id` + `get-library-docs`) | training-data fallback (acknowledge cutoff) | invoke any time the agent is about to use an unfamiliar API or the user names a library + version |
 
 ## Always-on layer
 
 - `context-mode` — output discipline (large tool output → sandbox). No opt-in needed.
 - `caveman` — communication style (terse, no filler). Active by default per Bhargav's CLAUDE.md.
+- `context7` MCP — bundled with pilot. Use proactively whenever a Plan/Build/Debug phase touches a library the agent might be hazy on. Free tier works without an API key; set `CONTEXT7_API_KEY` for higher rate limits.
 
 ## Resolution priority (when multiple options apply)
 

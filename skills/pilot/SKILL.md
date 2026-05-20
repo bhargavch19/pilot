@@ -48,6 +48,25 @@ dependencies). Before invoking, check the available-skills list:
 For `claude-mem:*` and other plugin-bundled skills, the namespace prefix
 (`claude-mem:`) must be present in the available-skills list before invoking.
 
+## context7 — bundled docs lookup MCP
+
+Pilot ships with the `context7` MCP server (declared in `plugin.json`).
+Use it **proactively** — don't wait for the user to ask:
+
+- Before writing code against a library you didn't see in the file's
+  imports / lockfile, or whose API may have changed.
+- When the user names a library + version ("how does this work in React 19").
+- When the user explicitly says "use context7" / "check the latest docs".
+
+Two MCP tools:
+- `mcp__context7__resolve-library-id` — find the canonical library id.
+- `mcp__context7__get-library-docs` — fetch focused excerpts for that id.
+
+When you invoke context7, mention it once ("Pulling current React 19 server
+component docs via context7…") so the user knows where the info came from.
+Skip if the user is mid-flow and the cost would be more disruptive than the
+risk of stale knowledge.
+
 ## Phase recognition cheatsheet
 
 | Signal | Phase |
