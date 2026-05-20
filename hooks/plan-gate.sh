@@ -34,17 +34,45 @@ if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
   fi
 fi
 
-# Plan-existence check: look in both the superpowers convention and the GSD
-# convention (registry's resolution priority gives GSD precedence when
-# .planning/ is present).
-recent_plan=""
-if [[ -d docs/superpowers/plans ]]; then
-  recent_plan=$(find docs/superpowers/plans -name '*.md' -mtime -1 2>/dev/null | head -1 || true)
-fi
-if [[ -z "$recent_plan" && -d .planning ]]; then
-  recent_plan=$(find .planning -type f \( -name 'PLAN.md' -o -name 'SPEC.md' \) -mtime -1 2>/dev/null | head -1 || true)
-fi
-if [[ -n "$recent_plan" ]]; then
+# Plan-existence check (git-based):
+#   1. Any plan file present in the working tree (committed or staged or
+#      untracked) — covers fresh plans not yet committed.
+#   2. Any plan file modified in the current branch's commits since
+#      merge-base with its upstream / main / master.
+# Fallback when outside git: simple working-tree existence check.
+plan_paths_re='^(docs/superpowers/plans/.*\.md|\.planning/.*/(PLAN|SPEC)\.md)$'
+
+plan_in_worktree() {
+  local f
+  for d in docs/superpowers/plans .planning; do
+    [[ -d "$d" ]] || continue
+    f=$(find "$d" -type f -name '*.md' 2>/dev/null \
+      | grep -E "$plan_paths_re" | head -1 || true)
+    [[ -n "$f" ]] && return 0
+  done
+  return 1
+}
+
+plan_in_branch() {
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 1
+  local base upstream
+  upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
+  if [[ -z "$upstream" ]]; then
+    for b in main master; do
+      if git rev-parse --verify "$b" >/dev/null 2>&1; then
+        upstream="$b"; break
+      fi
+    done
+  fi
+  [[ -z "$upstream" ]] && return 1
+  base=$(git merge-base HEAD "$upstream" 2>/dev/null || true)
+  [[ -z "$base" ]] && return 1
+  git log --name-only --pretty=format: "$base..HEAD" 2>/dev/null \
+    | grep -E "$plan_paths_re" | head -1 | grep -q . && return 0
+  return 1
+}
+
+if plan_in_worktree || plan_in_branch; then
   exit 0
 fi
 
@@ -52,12 +80,12 @@ cat <<EOF >&2
 plan-gate: G1 — write a plan first.
 
 Proposed change: $LINE_COUNT lines (>20 threshold).
-No recent (<24h) plan found in:
-  - docs/superpowers/plans/*.md
-  - .planning/**/PLAN.md (or SPEC.md)
+No plan found for this branch in:
+  - docs/superpowers/plans/*.md   (working tree or branch commits)
+  - .planning/**/PLAN.md|SPEC.md  (working tree or branch commits)
 
 Run the writing-plans skill (superpowers) or gsd-plan-phase, save the plan,
 then retry.
-Bypass: 'pilot --no-plan' (use sparingly).
+Bypass: say "pilot --no-plan" or "pilot off" (use sparingly).
 EOF
 exit 1
