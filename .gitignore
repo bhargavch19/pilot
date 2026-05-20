@@ -3,3 +3,10 @@ node_modules/
 *.log
 .env
 .env.local
+
+# Local Claude Code settings (per-machine, not for sharing)
+.claude/settings.local.json
+.claude/settings.json.bak.*
+
+# Pilot bypass markers (created at runtime; never tracked)
+.cache/pilot/
