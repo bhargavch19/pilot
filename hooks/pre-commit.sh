@@ -11,6 +11,11 @@ set -euo pipefail
 
 INPUT=$(cat)
 
+if [[ -z "$INPUT" ]] || ! printf '%s' "$INPUT" | jq empty 2>/dev/null; then
+  echo "pre-commit: stdin missing or not valid JSON — gate declining to enforce." >&2
+  exit 0
+fi
+
 TOOL=$(printf '%s' "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)
 [[ "$TOOL" == "Bash" ]] || exit 0
 

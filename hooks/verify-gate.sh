@@ -10,10 +10,15 @@ set -euo pipefail
 
 INPUT=$(cat)
 
+if [[ -z "$INPUT" ]] || ! printf '%s' "$INPUT" | jq empty 2>/dev/null; then
+  echo "verify-gate: stdin missing or not valid JSON — gate declining to enforce." >&2
+  exit 0
+fi
+
 # Stop hook input includes transcript_path; the JSONL file holds the
 # message history. Older inline `.transcript[]` payloads are supported
 # as a fallback so existing fixtures keep working.
-TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)
+TRANSCRIPT=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)
 
 if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
   LAST=$(jq -r '

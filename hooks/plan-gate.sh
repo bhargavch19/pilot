@@ -5,7 +5,11 @@
 set -euo pipefail
 
 INPUT=$(cat)
-TOOL=$(echo "$INPUT" | jq -r '.tool_name // .tool // empty' 2>/dev/null || echo "")
+if [[ -z "$INPUT" ]] || ! printf '%s' "$INPUT" | jq empty 2>/dev/null; then
+  echo "plan-gate: stdin missing or not valid JSON — gate declining to enforce." >&2
+  exit 0
+fi
+TOOL=$(printf '%s' "$INPUT" | jq -r '.tool_name // .tool // empty' 2>/dev/null || echo "")
 
 # Pick the right line-count expression per tool shape. For MultiEdit we
 # concatenate every edit's new_string so the total counts toward the gate.
