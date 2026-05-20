@@ -18,9 +18,11 @@ into.
 ## Quick install (marketplace path — recommended)
 
 > **Before publishing:** replace `<github-user>` below with your actual
-> GitHub handle. The repo must be pushed to a public (or accessible)
-> GitHub URL — pilot is a single-plugin marketplace, so the repo IS the
-> marketplace.
+> GitHub handle. Run `bash dev/finalize-readme.sh` to substitute it
+> automatically (uses `gh api user` if you're authed, or pass it as an
+> argument: `bash dev/finalize-readme.sh <handle>`). The repo must be
+> pushed to a public (or accessible) GitHub URL — pilot is a
+> single-plugin marketplace, so the repo IS the marketplace.
 
 In Claude Code:
 
