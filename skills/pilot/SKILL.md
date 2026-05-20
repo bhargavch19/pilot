@@ -183,6 +183,7 @@ and fall back to `gh` CLI invocations via Bash.
 | "slow", "latency", "perf", "profile", "benchmark" | 4.5 Performance |
 | User says "done" / "ready" before tests run | 5. Verify (gate) |
 | Tests green, user wants merge | 6. Review → 8. Ship |
+| "security review", "audit", "OWASP", diff touches auth/crypto/network | 6.5 Security (mandatory before Ship) |
 | "messy", "hard to change", code smell | 7. Refactor |
 | Phase complete | 9. Capture (auto) |
 

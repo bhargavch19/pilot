@@ -25,6 +25,7 @@ See `SKILL.md` → "Literal-name shortcut" for the exact rule (scanning conventi
 | 4.5 Performance | "slow"; "latency"; "perf"; "profile"; "benchmark"; "bottleneck"; "regression"; "p99" | `diagnose` | `superpowers:systematic-debugging` | reproduce-then-measure non-skippable; same primary as Debug but explicit phase keeps perf invariants visible |
 | 5. Verify | claim of "done"; before commit/PR | `superpowers:verification-before-completion` | `gsd-verify-work`, `gsd-validate-phase` | mandatory before Review |
 | 6. Review | pre-merge; "review this" | `superpowers:requesting-code-review` | `gsd-code-review`, `simplify` | mandatory before Ship |
+| 6.5 Security | "security review"; "audit"; "OWASP"; "vulnerability"; "sanitize"; "injection"; diff touches auth/crypto/network paths | `security-review` | `gsd-secure-phase` | always before Ship if any sensitive-path change |
 | 7. Refactor | "messy"; "hard to change"; "clean up" | `improve-codebase-architecture` | `zoom-out`, `gsd-map-codebase` | scope to current task only |
 | 8. Ship | "merge"; "PR"; "ship it" | `gsd-ship` | `superpowers:finishing-a-development-branch` | only after Verify + Review |
 | 9. Capture | post-ship; end of phase | _claude-mem plugin auto-hook (not skill-invokable)_ | `gsd-extract-learnings` | runs automatically |
