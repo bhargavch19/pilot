@@ -1,37 +1,46 @@
 #!/usr/bin/env bash
-# G1 enforcement: block Edit/Write >1 file or >20 LOC unless plan exists in last 24h.
+# G1 enforcement: block Edit/Write >20 LOC unless a recent plan exists.
 # Reads JSON tool invocation from stdin (Claude Code PreToolUse format).
 set -euo pipefail
 
 INPUT=$(cat)
-TOOL=$(echo "$INPUT" | jq -r '.tool // empty' 2>/dev/null || echo "")
+TOOL=$(echo "$INPUT" | jq -r '.tool_name // .tool // empty' 2>/dev/null || echo "")
 
 if [[ "$TOOL" != "Edit" && "$TOOL" != "Write" ]]; then
   exit 0
 fi
 
-NEW_STRING=$(echo "$INPUT" | jq -r '.input.new_string // .input.content // ""' 2>/dev/null || echo "")
+NEW_STRING=$(echo "$INPUT" | jq -r '.tool_input.new_string // .tool_input.content // .input.new_string // .input.content // ""' 2>/dev/null || echo "")
 LINE_COUNT=$(echo -n "$NEW_STRING" | grep -c '^' || true)
 
 if [[ "$LINE_COUNT" -le 20 ]]; then
   exit 0
 fi
 
-# Check for a recent plan (modified in last 24h).
+# Plan-existence check: look in both the superpowers convention and the GSD
+# convention (registry's resolution priority gives GSD precedence when
+# .planning/ is present).
+recent_plan=""
 if [[ -d docs/superpowers/plans ]]; then
-  RECENT=$(find docs/superpowers/plans -name '*.md' -mtime -1 2>/dev/null | head -1)
-  if [[ -n "$RECENT" ]]; then
-    exit 0
-  fi
+  recent_plan=$(find docs/superpowers/plans -name '*.md' -mtime -1 2>/dev/null | head -1 || true)
+fi
+if [[ -z "$recent_plan" && -d .planning ]]; then
+  recent_plan=$(find .planning -type f \( -name 'PLAN.md' -o -name 'SPEC.md' \) -mtime -1 2>/dev/null | head -1 || true)
+fi
+if [[ -n "$recent_plan" ]]; then
+  exit 0
 fi
 
 cat <<EOF >&2
 plan-gate: G1 — write a plan first.
 
 Proposed change: $LINE_COUNT lines (>20 threshold).
-No plan in docs/superpowers/plans/ modified within 24h.
+No recent (<24h) plan found in:
+  - docs/superpowers/plans/*.md
+  - .planning/**/PLAN.md (or SPEC.md)
 
-Run the writing-plans skill, save to docs/superpowers/plans/<date>-<topic>.md, then retry.
+Run the writing-plans skill (superpowers) or gsd-plan-phase, save the plan,
+then retry.
 Bypass: 'pilot --no-plan' (use sparingly).
 EOF
 exit 1

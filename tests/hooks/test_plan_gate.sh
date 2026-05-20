@@ -2,18 +2,18 @@
 # Test plan-gate.sh: blocks edits >20 LOC unless plan exists in last 24h.
 set -euo pipefail
 
-HOOK="$(cd "$(dirname "$0")/../.." && pwd)/pilot/hooks/plan-gate.sh"
+HOOK="$(cd "$(dirname "$0")/../.." && pwd)/hooks/plan-gate.sh"
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 
 # Case 1: small change (<=20 LOC, 1 file) → allow.
-input='{"tool":"Edit","input":{"file_path":"a.ts","new_string":"x"}}'
+input='{"tool_name":"Edit","tool_input":{"file_path":"a.ts","new_string":"x"}}'
 echo "$input" | "$HOOK" >/dev/null
 echo "PASS: small change allowed"
 
 # Case 2: large change (>20 LOC), no plan → block (exit 1) with G1 message.
 big=$(printf 'line\n%.0s' {1..25})
-input=$(jq -n --arg s "$big" '{tool:"Edit",input:{file_path:"a.ts",new_string:$s}}')
+input=$(jq -n --arg s "$big" '{tool_name:"Edit",tool_input:{file_path:"a.ts",new_string:$s}}')
 set +e
 err=$(cd "$TMP" && echo "$input" | "$HOOK" 2>&1 >/dev/null)
 rc=$?
@@ -28,10 +28,25 @@ if ! echo "$err" | grep -q 'plan-gate: G1'; then
 fi
 echo "PASS: large change blocked with G1 message"
 
-# Case 3: large change with recent plan → allow.
+# Case 3: large change with recent superpowers plan → allow.
 mkdir -p "$TMP/docs/superpowers/plans"
 touch "$TMP/docs/superpowers/plans/some-plan.md"
 ( cd "$TMP" && echo "$input" | "$HOOK" >/dev/null )
-echo "PASS: large change allowed with recent plan"
+echo "PASS: large change allowed with recent superpowers plan"
+rm -rf "$TMP/docs"
+
+# Case 4: large change with recent GSD plan (.planning/<phase>/PLAN.md) → allow.
+mkdir -p "$TMP/.planning/phase-1"
+touch "$TMP/.planning/phase-1/PLAN.md"
+( cd "$TMP" && echo "$input" | "$HOOK" >/dev/null )
+echo "PASS: large change allowed with recent GSD plan"
+rm -rf "$TMP/.planning"
+
+# Case 5: GSD SPEC.md (without PLAN.md) also satisfies the gate.
+mkdir -p "$TMP/.planning/phase-1"
+touch "$TMP/.planning/phase-1/SPEC.md"
+( cd "$TMP" && echo "$input" | "$HOOK" >/dev/null )
+echo "PASS: large change allowed with recent GSD SPEC.md"
+rm -rf "$TMP/.planning"
 
 echo "ALL plan-gate tests passed."
