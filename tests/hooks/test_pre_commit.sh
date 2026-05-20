@@ -105,6 +105,29 @@ EOF
 call_hook "$HEREDOC_CMD" >/dev/null
 echo "PASS: HEREDOC commit allowed (G3 skipped, files clean)"
 
+# Case 8b: bare `<<<` (here-string) in non-conventional msg → G3 still
+# applies (heredoc detector must require <<-?ident, not just <<).
+git reset bad.ts ok.ts >/dev/null 2>&1 || true
+rm -f bad.ts ok.ts
+echo "export const z = 1" > z2.ts
+git add z2.ts
+if call_hook "git commit -m 'just<<<stuff'" >/dev/null 2>&1; then
+  echo "FAIL: false-heredoc bypass — '<<<' shouldn't trip the heredoc detector"
+  exit 1
+fi
+git reset z2.ts >/dev/null
+rm z2.ts
+echo "PASS: bare '<<<' does not trip heredoc detector"
+
+# Case 8c: escaped quotes in -m → G3 skipped (sed can't parse safely),
+# file checks still run. Clean staging should pass.
+echo "export const clean = 1" > clean.ts
+git add clean.ts
+call_hook 'git commit -m "say \"hi\" feat"' >/dev/null
+echo "PASS: escaped-quote -m skips G3 with clean staging"
+git reset clean.ts >/dev/null
+rm clean.ts
+
 # Case 9: HEREDOC commit msg + console.log staged → G8 still blocks.
 echo "console.log('bad')" > bad.ts
 git add bad.ts

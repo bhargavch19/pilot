@@ -51,9 +51,20 @@ if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
 fi
 
 # Extract commit message from -m / --message= when reliably parsable.
-# Skip G3 when the message comes from HEREDOC, -F file, or editor.
+# Skip G3 when the message comes from HEREDOC, -F file, editor, or when
+# the command contains escaped quotes (sed can't disambiguate safely).
 MSG=""
-if [[ "$CMD" != *"<<"* ]] && [[ "$CMD" != *"-F "* ]] && [[ "$CMD" != *"--file="* ]]; then
+heredoc_re='(^|[[:space:]]|\()<<-?[[:space:]]*["'"'"']?[A-Za-z_][A-Za-z0-9_]*'
+has_heredoc=0
+if printf '%s' "$CMD" | grep -qE "$heredoc_re"; then
+  has_heredoc=1
+fi
+has_escaped_quotes=0
+if printf '%s' "$CMD" | grep -q '\\"'; then
+  has_escaped_quotes=1
+fi
+if [[ $has_heredoc -eq 0 && $has_escaped_quotes -eq 0 \
+   && "$CMD" != *"-F "* && "$CMD" != *"--file="* ]]; then
   MSG=$(printf '%s' "$CMD" | sed -nE 's/.*-m[[:space:]]+"([^"]*)".*/\1/p')
   if [[ -z "$MSG" ]]; then
     MSG=$(printf '%s' "$CMD" | sed -nE "s/.*-m[[:space:]]+'([^']*)'.*/\\1/p")
