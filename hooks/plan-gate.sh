@@ -17,6 +17,23 @@ if [[ "$LINE_COUNT" -le 20 ]]; then
   exit 0
 fi
 
+# Bypass: respect "pilot off", "pilot off rails", "pilot --no-plan" in the
+# last user message, or an active "off rails" state.
+TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)
+if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
+  USER_MSGS=$(jq -r 'select(.type=="user") | (.message.content // .message | tostring)' "$TRANSCRIPT" 2>/dev/null | tail -30 || true)
+  LAST_USER=$(printf '%s' "$USER_MSGS" | tail -1)
+  if printf '%s' "$LAST_USER" | grep -qiE 'pilot[[:space:]]+(off([[:space:]]+rails)?|--no-plan)([[:space:]]|$|[[:punct:]])'; then
+    echo "plan-gate: bypassed (pilot off / --no-plan in last user message)." >&2
+    exit 0
+  fi
+  STATE=$(printf '%s' "$USER_MSGS" | grep -iE 'pilot[[:space:]]+(off[[:space:]]+rails|back[[:space:]]+on)' | tail -1 || true)
+  if [[ "$STATE" =~ off[[:space:]]+rails ]]; then
+    echo "plan-gate: bypassed (pilot off rails active)." >&2
+    exit 0
+  fi
+fi
+
 # Plan-existence check: look in both the superpowers convention and the GSD
 # convention (registry's resolution priority gives GSD precedence when
 # .planning/ is present).
