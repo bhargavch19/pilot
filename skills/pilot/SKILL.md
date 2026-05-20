@@ -171,6 +171,7 @@ and fall back to `gh` CLI invocations via Bash.
 | Signal | Phase |
 |---|---|
 | Session opens; user typed nothing yet | 0. Recall |
+| "triage"; "what to work on"; "review the inbox" | 0.5 Triage |
 | "what if", "idea", "explore" — no code intent | 1. Frame (non-code) |
 | "build X", "add Y", "feature for Z" | 1. Frame (code) → 2. Plan |
 | User has a frame + says "go" or "plan" | 2. Plan |

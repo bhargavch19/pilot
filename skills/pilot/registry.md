@@ -14,6 +14,7 @@ See `SKILL.md` → "Literal-name shortcut" for the exact rule (scanning conventi
 | Phase | Triggers | Primary skill | Fallbacks | Resolution rule |
 |---|---|---|---|---|
 | 0. Recall | session start; "where were we"; "did we already" | `claude-mem:mem-search` | `gsd-resume-work` | always run on SessionStart |
+| 0.5 Triage | "triage"; "what to work on"; "incoming bugs"; "review the inbox"; "issue queue" | `triage` | `gsd-inbox` | fires before Frame when work source is an issue tracker / PR queue |
 | 1. Frame (non-code) | "idea"; "what if"; "explore"; "thinking about" | `grill-me` | `gsd-explore` | non-code keywords |
 | 1. Frame (code) | "build"; "add"; "feature"; "change <thing>" | `grill-with-docs` → `to-prd` | `superpowers:brainstorming` → `gsd-spec-phase` | if `.planning/` exists, use GSD path |
 | 2. Plan | post-frame; "plan this"; >1 file or >20 LOC | `superpowers:writing-plans` | `gsd-plan-phase`, `to-issues` | multi-session work → GSD; single-session → superpowers; tracer slicing → to-issues |
