@@ -19,7 +19,50 @@ When invoked at SessionStart (or first turn of a session), emit one line:
 [pilot active] phase routing on. say "pilot off" (one turn) or "pilot off rails" (session) to bypass.
 ```
 
+## Literal-name shortcut (highest priority)
+
+**If the user's prompt literally names a skill or MCP, route to it directly — skip phase detection.** Phase detection is for *inferring* intent. Literal naming is an *explicit command*. Respect it.
+
+### Scan for these tokens in the user prompt
+
+- Any **Primary** or **Fallback** skill id from `registry.md` — e.g. `tdd`, `diagnose`, `frontend-design`, `improve-codebase-architecture`, `writing-plans`, `gsd-plan-phase`, `superpowers:test-driven-development`, etc.
+- Any **bundled MCP**: `context7`, `playwright`, `github`.
+
+Multi-word skill names must appear as the one hyphenated token (`improve-codebase-architecture`, not "improve codebase architecture"). Namespace prefixes are **optional** in user prompts — `frontend-design` resolves to `frontend-design:frontend-design`, `writing-plans` to `superpowers:writing-plans`, etc. Match case-insensitively.
+
+### How to route on a literal hit
+
+- **Skill name** → invoke via the `Skill` tool with the canonical id, immediately.
+- **MCP name** → use its `mcp__<name>__*` tools proactively when the relevant phase arrives. Don't pre-call them; just commit to using them when the phase reaches them.
+
+### Multi-mention prompts → sequenced chain
+
+If the prompt names several skills/MCPs, treat each as a phase in a chain. Execute in the order they appear. Example user prompt:
+
+> "Use context7 for the docs, plan with writing-plans, TDD it, then verify with playwright. Finally, run improve-codebase-architecture."
+
+→ pre-resolves to:
+
+| Phase | Routed to |
+|---|---|
+| Docs lookup | `context7` MCP |
+| Plan | `superpowers:writing-plans` |
+| Build (logic) | `tdd` |
+| Verify (UI) | `playwright` MCP |
+| Refactor | `improve-codebase-architecture` |
+
+No keyword scoring needed — every phase has an explicit owner.
+
+### Edge cases
+
+- **Short identifier (`tdd`):** match when used as the skill ("TDD this", "use tdd", "tdd skill") — not when it appears inside a longer word.
+- **Generic vocabulary:** "design the UI" does **not** match `frontend-design` — the literal hyphenated token is absent. "Design" alone is a phase trigger (Build UI), routed by phase detection.
+- **Paraphrase, not literal:** "the formal plan skill" does **not** match `writing-plans` — falls through to phase detection (which still routes to `superpowers:writing-plans` for the Plan phase, so the outcome is identical).
+- **Unknown literal:** if a token looks like a skill name but isn't in the registry (e.g. `magic-fixer`), don't invent — fall through to phase detection and surface the gap once.
+
 ## Phase detection algorithm
+
+Run this **only after the Literal-name shortcut produced no match.**
 
 1. **Read `registry.md`** (it lives next to this file).
 2. **Scan the user prompt** for trigger keywords from the registry.

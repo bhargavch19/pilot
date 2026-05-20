@@ -3,6 +3,12 @@
 > The single source of truth pilot consults to route user intent → underlying skill.
 > To add a new skill: append a row. No code change required.
 
+## Literal-name routing wins (highest priority)
+
+If the user's prompt literally contains a skill id from the **Primary** or **Fallbacks** column below — or one of the bundled MCP names (`context7`, `playwright`, `github`) — pilot routes to it **immediately**, without keyword scoring. Multi-mention prompts produce a sequenced chain of phases.
+
+See `SKILL.md` → "Literal-name shortcut" for the exact rule (scanning conventions, namespace handling, edge cases). The phase table below applies only when no literal hit is found.
+
 ## Phase table
 
 | Phase | Triggers | Primary skill | Fallbacks | Resolution rule |
