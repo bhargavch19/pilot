@@ -95,9 +95,10 @@ echo "plan body" > .planning/phase-1/PLAN.md
 git add .planning
 git commit -q -m "docs: plan"
 assert_exit 0 "MultiEdit big total allowed with plan" bash -c "echo '$payload' | bash '$ROOT/hooks/plan-gate.sh'"
+# Clean up: hard reset back to the seed commit so the .planning history
+# doesn't leak into subsequent scenarios.
+git reset -q --hard HEAD~1
 rm -rf .planning
-git rm -rq .planning 2>/dev/null || true
-git commit -q --amend --no-edit -m "feat: seed" -- seed.txt 2>/dev/null || true
 
 # ---- plan-gate (NotebookEdit big) ----
 payload=$(jq -n --arg s "$big" '{tool_name:"NotebookEdit",tool_input:{notebook_path:"n.ipynb",cell_id:"c1",new_source:$s,edit_mode:"replace"}}')
