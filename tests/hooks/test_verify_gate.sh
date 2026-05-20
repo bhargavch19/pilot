@@ -82,17 +82,6 @@ OUT=$(mk_input "$t" | "$HOOK" 2>&1)
 [[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: make test not recognised"; exit 1; }
 echo "PASS: make test evidence allowed"
 
-# Case 8: per-repo .pilot.yml extends runners.
-cat > .pilot.yml <<'EOF'
-test_patterns:
-  - 'my-runner'
-EOF
-t=$(mk_transcript "my-runner finished — all passed. Done.")
-OUT=$(mk_input "$t" | "$HOOK" 2>&1)
-[[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: .pilot.yml extra pattern not picked up"; exit 1; }
-echo "PASS: .pilot.yml extra runner allowed"
-rm -f .pilot.yml
-
 # Case 9: per-repo .pilot.json extends runners.
 echo '{"test_patterns":["another-runner"]}' > .pilot.json
 t=$(mk_transcript "another-runner — 12 passed. Done.")

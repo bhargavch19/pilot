@@ -80,8 +80,8 @@ into `~/.claude/settings.json` using absolute paths.
 3. If claim present, looks for evidence: a test-runner invocation
    (`pytest`, `bun test`, `vitest`, `nx test`, `make test`, ...) plus a
    result token (`passed`, `PASS`, `✓`, `0 failed`, ...).
-4. Per-repo extension: `.pilot.yml` or `.pilot.json` `test_patterns:`
-   list is unioned with the built-ins.
+4. Per-repo extension: `.pilot.json` `test_patterns:` list (JSON array
+   of regex strings) is unioned with the built-ins.
 5. **Warn only** — stderr message reaches the assistant as a system
    reminder, but exit is always 0 (never blocks).
 

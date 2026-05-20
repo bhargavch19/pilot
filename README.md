@@ -77,20 +77,15 @@ sub-conversation.
 
 ## Configuration
 
-Per-repo runner extensions for `verify-gate.sh`:
-
-```yaml
-# .pilot.yml
-test_patterns:
-  - 'rake test'
-  - 'my-custom-runner'
-```
-
-Or `.pilot.json`:
+Per-repo runner extensions for `verify-gate.sh` via `.pilot.json` at the
+repo root:
 
 ```json
 { "test_patterns": ["rake test", "my-custom-runner"] }
 ```
+
+The patterns are regex strings; they're unioned with pilot's built-in
+runner list (pytest, bun test, vitest, nx test, make test, ...).
 
 ## Tests
 
