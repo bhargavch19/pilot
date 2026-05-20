@@ -61,6 +61,21 @@ for t in bash jq git; do
     tool_fail=$((tool_fail + 1))
   fi
 done
+# node/npx — soft prereq for the bundled context7 MCP.
+if tool_installed npx; then
+  printf "  %s npx%s (context7 MCP)%s\n" "$(mark_ok)" "$DIM" "$RESET"
+else
+  printf "  %s npx%s (soft — context7 docs-lookup MCP will be unavailable)%s\n" "$(mark_warn)" "$DIM" "$RESET"
+fi
+echo
+
+# --- Bundled MCP servers ---
+echo "Bundled MCP servers:"
+if [[ -n "${CONTEXT7_API_KEY:-}" ]]; then
+  printf "  %s context7%s (CONTEXT7_API_KEY set — higher rate limits)%s\n" "$(mark_ok)" "$DIM" "$RESET"
+else
+  printf "  %s context7%s (free tier — set CONTEXT7_API_KEY for higher limits)%s\n" "$(mark_warn)" "$DIM" "$RESET"
+fi
 echo
 
 # --- Recommended plugins ---

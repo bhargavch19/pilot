@@ -16,6 +16,16 @@ to see what's installed and what's missing.
 | `bash` ≥ 4 | All hooks. |
 | `jq`        | Hook stdin/stdout parsing, settings.json merging. |
 | `git`       | plan-gate uses `git merge-base` for plan-freshness checks. |
+| `node` + `npx` | Pulls the bundled `context7` MCP server on first invocation. Soft prereq — pilot still loads without it; only the docs-lookup phase degrades. |
+
+## Bundled MCP servers
+
+Pilot's `plugin.json` declares one MCP server. Claude Code starts it
+automatically on plugin install.
+
+| Server | Purpose | API key |
+|---|---|---|
+| `context7` (`@upstash/context7-mcp`) | Up-to-date library docs (resolve-library-id + get-library-docs tools). Pilot routes here on any "use latest docs / how does X work in version Y" query. | Optional. `CONTEXT7_API_KEY` env var raises rate limits. |
 
 ## Skills / plugins
 

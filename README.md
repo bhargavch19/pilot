@@ -32,10 +32,12 @@ In Claude Code:
 ```
 
 Restart Claude Code. All five hooks (PreToolUse on Edit/Write/MultiEdit/
-NotebookEdit + Bash, Stop, SubagentStop, SessionStart) wire automatically
-via the plugin manifest. The slash commands become available, and the
-SessionStart banner shows the active version + a first-run hint pointing
-at `/pilot-doctor`.
+NotebookEdit + Bash, Stop, SubagentStop, SessionStart, PreCompact) wire
+automatically via the plugin manifest. The slash commands become available,
+the SessionStart banner shows the active version + a first-run hint
+pointing at `/pilot-doctor`, and the bundled `context7` MCP server starts
+in the background for on-demand library doc lookups (set
+`CONTEXT7_API_KEY` for higher rate limits — optional).
 
 Verify with `/pilot-doctor` in any session.
 
