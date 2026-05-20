@@ -60,6 +60,23 @@ No keyword scoring needed — every phase has an explicit owner.
 - **Paraphrase, not literal:** "the formal plan skill" does **not** match `writing-plans` — falls through to phase detection (which still routes to `superpowers:writing-plans` for the Plan phase, so the outcome is identical).
 - **Unknown literal:** if a token looks like a skill name but isn't in the registry (e.g. `magic-fixer`), don't invent — fall through to phase detection and surface the gap once.
 
+## Cross-turn phase awareness
+
+Pilot doesn't carry explicit phase state across turns — but the routing telemetry already is the state. **Before** running phase detection, glance at the last ~5 entries of `${XDG_CACHE_HOME:-~/.cache}/pilot/routing.log`:
+
+```bash
+tail -5 "${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log" 2>/dev/null
+```
+
+Use those entries as **context** for the current routing decision:
+
+- If the latest entries show a chain in progress (`pilot → writing-plans → tdd → ...`), the user's "go" / "continue" / "next" usually means **advance to the next phase**, not start over. Look at the chain shape and pick the natural successor (Build → Verify, Verify → Review, Review → Ship).
+- If the latest entry was `skill=gsd-ship` or another terminal, the work is done. A fresh prompt should route to Recall / Triage / Frame.
+- If there are no entries from the last ~10 minutes, treat the session as fresh and re-run phase detection from scratch.
+- If the chain shows the same skill repeated multiple times (`pilot → tdd → tdd → tdd`), the user is iterating — don't re-engage routing, just continue.
+
+This is **observation**, not control flow. The LLM uses it as a hint to break ties or pick natural successors. The registry's resolution rules still govern actual phase selection.
+
 ## Phase detection algorithm
 
 Run this **only after the Literal-name shortcut produced no match.**
