@@ -180,6 +180,7 @@ and fall back to `gh` CLI invocations via Bash.
 | Plan exists; user says "build" / "implement" | 3. Build |
 | User mentions UI / component / screen | 3. Build (UI) |
 | "bug", "broken", "throws", "fails" | 4. Debug |
+| "slow", "latency", "perf", "profile", "benchmark" | 4.5 Performance |
 | User says "done" / "ready" before tests run | 5. Verify (gate) |
 | Tests green, user wants merge | 6. Review → 8. Ship |
 | "messy", "hard to change", code smell | 7. Refactor |

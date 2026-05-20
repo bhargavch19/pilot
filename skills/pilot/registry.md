@@ -22,6 +22,7 @@ See `SKILL.md` → "Literal-name shortcut" for the exact rule (scanning conventi
 | 3. Build (logic) | post-plan; code work begins; "implement" | `tdd` | `superpowers:test-driven-development`, `gsd-execute-phase` | always TDD unless `--skip-tdd` |
 | 3. Build (UI) | "UI"; "design"; "component"; "screen"; "page" | `frontend-design:frontend-design` | `gsd-sketch`, `gsd-ui-phase` | UI-specific keywords |
 | 4. Debug | "bug"; "broken"; "throws"; "fails"; "regression" | `diagnose` | `superpowers:systematic-debugging`, `gsd-debug` | hypothesis-first non-skippable |
+| 4.5 Performance | "slow"; "latency"; "perf"; "profile"; "benchmark"; "bottleneck"; "regression"; "p99" | `diagnose` | `superpowers:systematic-debugging` | reproduce-then-measure non-skippable; same primary as Debug but explicit phase keeps perf invariants visible |
 | 5. Verify | claim of "done"; before commit/PR | `superpowers:verification-before-completion` | `gsd-verify-work`, `gsd-validate-phase` | mandatory before Review |
 | 6. Review | pre-merge; "review this" | `superpowers:requesting-code-review` | `gsd-code-review`, `simplify` | mandatory before Ship |
 | 7. Refactor | "messy"; "hard to change"; "clean up" | `improve-codebase-architecture` | `zoom-out`, `gsd-map-codebase` | scope to current task only |
