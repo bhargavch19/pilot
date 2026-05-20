@@ -4,6 +4,41 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.5.1] — 2026-05-20
+
+Patch follow-up on 0.5.0 — closes the open audit findings on the
+context7 bundling and a couple of older deferred items.
+
+### Fixed
+- **Dropped ambiguous `${CONTEXT7_API_KEY:-}` env block.** Bash-style
+  defaults aren't part of Claude Code's plugin-manifest interpolator
+  (other working plugins don't pass user env vars via the manifest at
+  all). MCP servers now inherit Claude Code's process env; users
+  `export` keys in their shell before launching.
+- **Pinned `@upstash/context7-mcp@2.2.5`.** Was resolving to *latest*
+  on every npx invocation — any future major release would land
+  unannounced. Manual bumps from here on.
+- **`dev/dry-run.sh` cleanup fixed.** The MultiEdit-with-plan scenario
+  used `git rm + git commit --amend --no-edit -m "..."` (contradictory
+  flags, didn't actually undo the `.planning` commit). Replaced with
+  `git reset --hard HEAD~1`.
+
+### Added
+- **`PILOT_DISABLE_CONTEXT7` opt-out.** Set the env var to any
+  non-empty value and pilot's SKILL.md tells Claude to skip the
+  docs-lookup phase entirely (for restricted-network setups).
+- **`routing.log` cap at 500 lines.** Telemetry instruction in
+  SKILL.md now tails the log when it grows past 500 entries.
+- **`/pilot-doctor` checks MCP server health.** New section reads
+  `mcpServers` from plugin.json, verifies each command is on PATH,
+  reports `CONTEXT7_API_KEY` + `PILOT_DISABLE_CONTEXT7` state. Also
+  picks up `precompact-anchor.sh` in the hook checks (was missed).
+- **CI validates `mcpServers` shape.** plugin-manifest job now jq-
+  asserts every server has a string command and well-formed args.
+- **`web/index.html` updated for v0.5.1 + context7.** New scene 05
+  walks through the resolve-library-id → get-library-docs flow.
+  "Five hooks" copy bumped to "six" (PreCompact was missed in 0.4.0).
+
 ## [0.5.0] — 2026-05-20
 
 First bundled MCP server. Pilot now ships with `context7` so Claude can
