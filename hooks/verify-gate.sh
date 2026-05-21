@@ -27,6 +27,27 @@ if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
     | if type=="array" then (map(select(.type=="text") | .text) | join("\n"))
       else (. | tostring) end
   ' "$TRANSCRIPT" 2>/dev/null | tail -200 || true)
+
+  # Schema-drift detection: transcript exists and is non-empty, but our jq
+  # expression yielded nothing. Either Claude Code's JSONL schema changed or
+  # this turn was tool-only (no text). The second case is benign; the first
+  # is silent rot. Surface a diagnostic so failures are visible early.
+  if [[ -z "$LAST" ]]; then
+    TRANSCRIPT_LINES=$(wc -l < "$TRANSCRIPT" 2>/dev/null || echo 0)
+    if (( TRANSCRIPT_LINES > 0 )); then
+      # Re-try with a permissive fallback: grab any `text` field anywhere in
+      # the last 50 lines. Catches schema variants where .message.content
+      # was renamed (e.g., to .content or .delta.text).
+      LAST=$(tail -50 "$TRANSCRIPT" 2>/dev/null \
+        | jq -r '[.. | objects | .text? // empty] | join("\n")' 2>/dev/null \
+        | tail -200 || true)
+
+      if [[ -z "$LAST" ]]; then
+        echo "verify-gate: transcript has $TRANSCRIPT_LINES lines but yielded no text — schema may have changed; gate inactive this turn." >&2
+        exit 0
+      fi
+    fi
+  fi
 else
   LAST=$(echo "$INPUT" | jq -r '[.transcript[]? | select(.role=="assistant") | .content] | .[-5:] | join("\n")' 2>/dev/null || true)
 fi
