@@ -12,8 +12,8 @@ mkdir -p "$XDG_CACHE_HOME/pilot"
 # Case 1: bare invocation, no bypass, no routing log → core sections.
 OUT=$(echo '{"trigger":"manual"}' | bash "$HOOK")
 echo "$OUT" | grep -q '\[pilot v' || { echo "FAIL: missing version header"; exit 1; }
-echo "$OUT" | grep -q 'Routing rules' || { echo "FAIL: missing routing rules"; exit 1; }
-echo "$OUT" | grep -q 'Guardrails active' || { echo "FAIL: missing guardrails line"; exit 1; }
+echo "$OUT" | grep -q 'registry.md' || { echo "FAIL: missing registry.md pointer (replaces inline routing rules)"; exit 1; }
+echo "$OUT" | grep -q 'Guardrails:' || { echo "FAIL: missing guardrails line"; exit 1; }
 echo "$OUT" | grep -q 'Bypass state: none' || { echo "FAIL: bypass state should be 'none'"; exit 1; }
 echo "$OUT" | grep -q 'Recent routing' && { echo "FAIL: routing log shouldn't be shown when empty"; exit 1; }
 echo "PASS: bare invocation prints core anchor"

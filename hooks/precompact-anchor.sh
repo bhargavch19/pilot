@@ -36,31 +36,26 @@ elif [[ -f "$CACHE_DIR/bypass-once" \
   BYPASS_STATE="one-shot armed"
 fi
 
-# Last few routing decisions (if any).
+# Last 3 routing decisions (if any). Truncated from 5 to keep post-compact
+# context cost ~constant as the registry grows.
 RECENT_ROUTES=""
 if [[ -f "$LOG" ]]; then
-  RECENT_ROUTES=$(tail -5 "$LOG" 2>/dev/null | sed 's/^/  /')
+  RECENT_ROUTES=$(tail -3 "$LOG" 2>/dev/null | sed 's/^/  /')
 fi
 
+# Terse re-anchor: registry has 17+ phases, can't enumerate inline post-compact
+# without burning tokens. Point at registry.md instead and surface only the
+# session-relevant operational state (bypass + recent routes).
 cat <<EOF
-[pilot v${VERSION}] re-anchoring through compact (trigger: ${TRIGGER}).
-
-Routing rules (read \`skills/pilot/registry.md\` for the full table):
-  Frame "what if/build/add" → grill-me / grill-with-docs / to-prd
-  Plan  ">1 file or >20 LOC" → superpowers:writing-plans / gsd-plan-phase
-  Build "implement"          → tdd / superpowers:test-driven-development
-  Debug "bug/broken/throws"  → diagnose / superpowers:systematic-debugging
-  Verify "done/ready"        → superpowers:verification-before-completion
-  Review "PR/review"         → superpowers:requesting-code-review
-  Ship  "merge/ship"         → gsd-ship / superpowers:finishing-a-development-branch
-
-Guardrails active: G1 (plan-gate), G3/G7/G8/G12 (pre-commit), G14 (verify-gate).
-Bypass: /pilot-off | /pilot-off-rails | /pilot-bypass --no-plan|--no-precommit.
+[pilot v${VERSION}] re-anchored post-compact (trigger: ${TRIGGER}).
+Routing → \`skills/pilot/registry.md\` (17 phases, literal-name shortcut active).
+Guardrails: G1 plan-gate · G3/G7/G8/G12 pre-commit · G14 verify-gate.
+Bypass: /pilot-off · /pilot-off-rails · /pilot-bypass [--no-plan|--no-precommit].
 Bypass state: ${BYPASS_STATE}.
 EOF
 
 if [[ -n "$RECENT_ROUTES" ]]; then
   echo
-  echo "Recent routing (last 5):"
+  echo "Recent routing (last 3):"
   echo "$RECENT_ROUTES"
 fi
