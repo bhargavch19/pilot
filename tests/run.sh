@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 fail=0
-for d in hooks dev; do
+for d in hooks dev skills; do
   [[ -d "$d" ]] || continue
   for t in "$d"/test_*.sh; do
     [[ -f "$t" ]] || continue
