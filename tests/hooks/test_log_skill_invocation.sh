@@ -41,4 +41,18 @@ LINE_COUNT=$(wc -l < "$LOG")
 (( LINE_COUNT <= 500 )) || { echo "FAIL: cap not enforced (got $LINE_COUNT lines)"; exit 1; }
 echo "PASS: truncates to 500 lines"
 
+# Case 5: session_id field is captured when present (truncated to 8 chars).
+: > "$LOG"
+INPUT='{"session_id":"abc12345-def6-7890-1234-567890abcdef","tool_input":{"skill":"diagnose"}}'
+printf '%s' "$INPUT" | "$HOOK"
+grep -q 'session=abc12345 skill=diagnose' "$LOG" || { echo "FAIL: session_id not captured"; exit 1; }
+echo "PASS: session_id captured (truncated to 8 chars)"
+
+# Case 6: missing session_id → entry still written, no session= field.
+: > "$LOG"
+INPUT='{"tool_input":{"skill":"tdd"}}'
+printf '%s' "$INPUT" | "$HOOK"
+grep -q '^[^ ]* skill=tdd$' "$LOG" || { echo "FAIL: missing session_id should produce session-less line, got: $(cat "$LOG")"; exit 1; }
+echo "PASS: missing session_id produces session-less entry"
+
 echo "ALL log-skill-invocation tests passed."

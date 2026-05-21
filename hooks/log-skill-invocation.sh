@@ -17,10 +17,16 @@ fi
 SKILL=$(printf '%s' "$INPUT" | jq -r '.tool_input.skill // empty' 2>/dev/null || true)
 [[ -z "$SKILL" ]] && exit 0
 
+# Capture session_id when Claude Code provides it. Lets /pilot-trace scope to
+# a single session even when concurrent sessions interleave in the log.
+SESSION=$(printf '%s' "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || true)
+SESSION_FIELD=""
+[[ -n "$SESSION" ]] && SESSION_FIELD=" session=${SESSION:0:8}"
+
 LOG="${XDG_CACHE_HOME:-$HOME/.cache}/pilot/routing.log"
 mkdir -p "$(dirname "$LOG")" 2>/dev/null || exit 0
 
-printf '%s skill=%s\n' "$(date -u +%FT%TZ)" "$SKILL" >> "$LOG" 2>/dev/null || exit 0
+printf '%s%s skill=%s\n' "$(date -u +%FT%TZ)" "$SESSION_FIELD" "$SKILL" >> "$LOG" 2>/dev/null || exit 0
 
 # Bound the log so it doesn't grow without limit.
 if [[ -f "$LOG" ]] && (( $(wc -l < "$LOG") > 500 )); then
