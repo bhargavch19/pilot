@@ -19,7 +19,7 @@ into.
 
 ## Quick install (marketplace path — recommended)
 
-> **Before publishing:** replace `<github-user>` below with your actual
+> **Before publishing:** replace `bhargavch19` below with your actual
 > GitHub handle. Run `bash dev/finalize-readme.sh` to substitute it
 > automatically (uses `gh api user` if you're authed, or pass it as an
 > argument: `bash dev/finalize-readme.sh <handle>`). The repo must be
@@ -29,7 +29,7 @@ into.
 In Claude Code:
 
 ```
-/plugin marketplace add <github-user>/pilot
+/plugin marketplace add bhargavch19/pilot
 /plugin install pilot@pilot
 ```
 
@@ -70,7 +70,7 @@ Verify with `/pilot-doctor` in any session.
 For hacking on pilot without going through marketplace publishing:
 
 ```bash
-git clone https://github.com/<github-user>/pilot ~/Workspace/claude-skill
+git clone https://github.com/bhargavch19/pilot ~/Workspace/claude-skill
 bash ~/Workspace/claude-skill/dev/symlink-pilot.sh    # does all 3 steps
 # restart Claude Code, then run /pilot-doctor
 ```
