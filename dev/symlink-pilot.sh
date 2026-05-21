@@ -13,25 +13,32 @@
 set -euo pipefail
 
 DEV_DIR="$(cd "$(dirname "$0")" && pwd)"
-BUILD="$(cd "$DEV_DIR/.." && pwd)/skills/pilot"
-TARGET="$HOME/.claude/skills/pilot"
+SKILLS_SRC="$(cd "$DEV_DIR/.." && pwd)/skills"
 
-echo "==> [1/3] Symlinking skill dir..."
+echo "==> [1/3] Symlinking skill dirs..."
 
 mkdir -p "$HOME/.claude/skills"
 
-if [[ -L "$TARGET" ]]; then
-  echo "Removing existing symlink: $TARGET"
-  rm "$TARGET"
-elif [[ -e "$TARGET" ]]; then
-  BACKUP="$TARGET.bak.$(date +%s)"
-  echo "Backing up existing dir to $BACKUP"
-  mv "$TARGET" "$BACKUP"
-fi
+# Symlink every immediate subdirectory of skills/ — pilot's own skill plus
+# any bundled scaffolds (migration-safety, pre-deploy-checklist, etc.) the
+# marketplace install would pick up automatically via plugin.json's
+# "skills": "./skills/" declaration.
+for skill_dir in "$SKILLS_SRC"/*/; do
+  [[ -d "$skill_dir" ]] || continue
+  name=$(basename "$skill_dir")
+  target="$HOME/.claude/skills/$name"
 
-ln -s "$BUILD" "$TARGET"
-echo "Symlinked: $TARGET -> $BUILD"
-ls -la "$TARGET"
+  if [[ -L "$target" ]]; then
+    rm "$target"
+  elif [[ -e "$target" ]]; then
+    backup="$target.bak.$(date +%s)"
+    echo "Backing up existing dir to $backup"
+    mv "$target" "$backup"
+  fi
+
+  ln -s "${skill_dir%/}" "$target"
+  echo "  ✓ $name → $target"
+done
 
 if [[ "${SKIP_WIRE:-}" == "1" ]]; then
   echo
