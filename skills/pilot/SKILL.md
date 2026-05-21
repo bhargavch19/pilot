@@ -237,6 +237,17 @@ For multi-step phase combinations, see:
 
 Default: route. Ask only when a guardrail forces it (e.g., G1 needs scope to be known before plan vs build).
 
+## Relationship with Claude Code Auto Memory + Auto Dream
+
+Pilot does **not** ship its own memory consolidation. Claude Code already provides:
+
+- **Auto Memory** (`~/.claude/projects/<x>/memory/`) — captures patterns each session.
+- **Auto Dream** — Anthropic's built-in consolidation pass; runs automatically every 24h + 5 sessions, or manually via `/dream` (rollout in progress) / "dream" / "consolidate my memory files". Sandboxed, lock-protected, background.
+
+Pilot's **Phase 0 Recall** primary (`claude-mem:mem-search`) reads from the same memory dir Auto Dream maintains. Better-consolidated memories → better Recall → better routing on subsequent prompts. Pilot doesn't write to that directory directly — Auto Memory owns capture, Auto Dream owns maintenance.
+
+If memory feels stale (e.g. after a big refactor), tell Claude "dream" / "consolidate my memory files" before resuming work — the next Recall will benefit.
+
 ## Routing telemetry
 
 `hooks/log-skill-invocation.sh` runs on `PostToolUse: Skill` and appends
