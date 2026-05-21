@@ -206,6 +206,7 @@ and fall back to `gh` CLI invocations via Bash.
 | "deploy", "release", "ship to prod" | 7.75 Pre-deploy (mandatory before Ship) |
 | "monitor", "after deploy", "rollback", "did the deploy work" | 8.5 Post-deploy |
 | Phase complete | 9. Capture (auto) |
+| "how do I X", "is there a skill for", "find a skill" | Meta. Skill discovery |
 
 ## Playbooks
 
