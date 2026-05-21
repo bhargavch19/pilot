@@ -108,4 +108,15 @@ OUT=$(mk_input "$t" | "$HOOK" 2>&1 || true)
 [[ "$OUT" == *"verify-gate"* ]] || { echo "FAIL: bare done not flagged"; exit 1; }
 echo "PASS: bare done flagged (transcript_path)"
 
+# Case 11: schema-drift detection — non-empty transcript that doesn't match
+# the expected jq path should surface a diagnostic instead of silent pass.
+FAKE_TRANSCRIPT="$TMP/schema-drift.jsonl"
+cat > "$FAKE_TRANSCRIPT" <<'EOF'
+{"type":"unknown","payload":{"weird_field":"some text we cannot parse"}}
+{"type":"unknown","payload":{"weird_field":"another line"}}
+EOF
+STDERR=$(jq -n --arg t "$FAKE_TRANSCRIPT" '{transcript_path: $t}' | "$HOOK" 2>&1 1>/dev/null || true)
+echo "$STDERR" | grep -q 'schema may have changed' || { echo "FAIL: schema-drift diagnostic missing, got: $STDERR"; exit 1; }
+echo "PASS: schema-drift surfaced on unparseable transcript"
+
 echo "ALL verify-gate tests passed."
