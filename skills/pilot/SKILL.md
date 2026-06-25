@@ -27,7 +27,7 @@ The only exception: if pilot is invoked mid-session (not at SessionStart, so the
 
 ### Scan for these tokens in the user prompt
 
-- Any **Primary** or **Fallback** skill id from `registry.md` — e.g. `tdd`, `diagnose`, `frontend-design`, `improve-codebase-architecture`, `writing-plans`, `gsd-plan-phase`, `superpowers:test-driven-development`, etc.
+- Any **Primary** or **Fallback** skill id from `registry.md` — e.g. `tdd`, `diagnose`, `ui-ux-pro-max`, `frontend-design`, `improve-codebase-architecture`, `writing-plans`, `gsd-plan-phase`, `superpowers:test-driven-development`, etc.
 - Any **bundled MCP**: `context7`, `playwright`, `github`.
 
 Multi-word skill names must appear as the one hyphenated token (`improve-codebase-architecture`, not "improve codebase architecture"). Namespace prefixes are **optional** in user prompts — `frontend-design` resolves to `frontend-design:frontend-design`, `writing-plans` to `superpowers:writing-plans`, etc. Match case-insensitively.
@@ -235,7 +235,7 @@ Two equivalent forms. **Natural language** is matched by the gate hooks directly
 
 ## What pilot does NOT do
 
-- Does not write code itself for code phases — it invokes Build skills (tdd / superpowers:test-driven-development / frontend-design:frontend-design).
+- Does not write code itself for code phases — it invokes Build skills (tdd / superpowers:test-driven-development / ui-ux-pro-max / frontend-design:frontend-design).
 - Does not duplicate underlying skill logic. Trust them.
 - Does not bypass guardrails silently. Always announce when a guardrail blocks.
 
