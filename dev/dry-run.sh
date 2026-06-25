@@ -67,7 +67,7 @@ echo "$out" | head -1 | sed 's/^/    /'
 echo
 echo "=== PreCompact anchor ==="
 out=$(echo '{"trigger":"manual"}' | bash "$ROOT/hooks/precompact-anchor.sh")
-if echo "$out" | grep -q 'Routing rules' && echo "$out" | grep -q 'Bypass state'; then
+if echo "$out" | grep -q 'Routing' && echo "$out" | grep -q 'Bypass state'; then
   ok "emits routing anchor"
 else
   fail "anchor missing routing/bypass sections"
@@ -165,6 +165,9 @@ else
 fi
 
 # ---- verify-gate (done w/o evidence → warns) ----
+# The gate only engages on turns that touched source files, so stage a
+# code change first (it ignores analysis/docs-only turns).
+echo "export const z = 1" > nag.ts && git add nag.ts
 TR3="$TMP/t3.jsonl"
 jq -n '{type:"assistant", message:{role:"assistant", content:[{type:"text", text:"All done. Ready to ship."}]}}' > "$TR3"
 out=$(echo "{\"transcript_path\":\"$TR3\",\"stop_hook_active\":true}" | bash "$ROOT/hooks/verify-gate.sh" 2>&1)
@@ -173,6 +176,19 @@ if echo "$out" | grep -q 'verify-gate'; then
 else
   fail "missed bare-done"
 fi
+git reset nag.ts >/dev/null && rm -f nag.ts
+
+# ---- verify-gate (done on docs-only turn → silent) ----
+# Regression guard for the code-change gate: a bare "done" with only a
+# non-source file changed must NOT warn.
+echo "notes" > nag.md && git add nag.md
+out=$(echo "{\"transcript_path\":\"$TR3\",\"stop_hook_active\":true}" | bash "$ROOT/hooks/verify-gate.sh" 2>&1)
+if echo "$out" | grep -q 'verify-gate'; then
+  fail "false positive on docs-only done"
+else
+  ok "bare done, docs-only change → silent"
+fi
+git reset nag.md >/dev/null && rm -f nag.md
 
 # ---- Summary ----
 echo

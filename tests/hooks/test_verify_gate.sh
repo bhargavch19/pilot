@@ -119,4 +119,32 @@ STDERR=$(jq -n --arg t "$FAKE_TRANSCRIPT" '{transcript_path: $t}' | "$HOOK" 2>&1
 echo "$STDERR" | grep -q 'schema may have changed' || { echo "FAIL: schema-drift diagnostic missing, got: $STDERR"; exit 1; }
 echo "PASS: schema-drift surfaced on unparseable transcript"
 
+# ---- code-change gating -------------------------------------------------
+# A "done" claim on a turn that touched no source files should not trip the
+# gate. Exercised inside a real git repo so `git status` is meaningful.
+# (The cases above run from a non-git temp dir, hitting the fallback path.)
+GITREPO="$TMP/gitrepo"
+mkdir -p "$GITREPO"
+( cd "$GITREPO" && git init -q )
+
+# Case 12: bare done, clean working tree (no code changed) → NO warning.
+t=$(mk_transcript "All done. Shipping.")
+OUT=$( cd "$GITREPO" && mk_input "$t" | "$HOOK" 2>&1 || true )
+[[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: flagged done on a no-code-change turn"; exit 1; }
+echo "PASS: done on clean repo (no source touched) not flagged"
+
+# Case 13: bare done with a changed source file → warning returns.
+( cd "$GITREPO" && echo "export const x = 1;" > mod.ts )
+t=$(mk_transcript "All done. Shipping.")
+OUT=$( cd "$GITREPO" && mk_input "$t" | "$HOOK" 2>&1 || true )
+[[ "$OUT" == *"verify-gate"* ]] || { echo "FAIL: missed done with source changed"; exit 1; }
+echo "PASS: done with source changed flagged"
+
+# Case 14: bare done, only a non-code file changed → NO warning.
+( cd "$GITREPO" && rm -f mod.ts && echo "# notes" > NOTES.md )
+t=$(mk_transcript "All done. Shipping.")
+OUT=$( cd "$GITREPO" && mk_input "$t" | "$HOOK" 2>&1 || true )
+[[ "$OUT" != *"verify-gate"* ]] || { echo "FAIL: flagged done on a docs-only change"; exit 1; }
+echo "PASS: done on docs-only change not flagged"
+
 echo "ALL verify-gate tests passed."

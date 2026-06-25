@@ -59,6 +59,19 @@ if ! echo "$LAST" | grep -iqE '\b(done|complete|completed|ready|fixed|passing|al
   exit 0
 fi
 
+# Only nag when code actually changed in the working tree. A "done" claim on
+# a pure analysis / docs / planning turn (no source touched) shouldn't trip
+# the test gate. Inside a git repo with no changed code files → skip.
+# Outside git (or on git error) → fall through to the original behavior.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  CODE_CHANGED=$(git status --porcelain 2>/dev/null \
+    | grep -iE '\.(ts|tsx|js|jsx|mjs|cjs|py|go|rs|rb|java|kt|swift|m|c|cc|cpp|h|hpp|cs|php|ex|exs|scala|clj|sh)$' \
+    | head -1 || true)
+  if [[ -z "$CODE_CHANGED" ]]; then
+    exit 0
+  fi
+fi
+
 # Built-in test runners. Conservative regex: bare command followed by space
 # or end-of-line to avoid matching `make test-fixtures` etc.
 DEFAULT_RUNNERS='(pytest|npm test|npm run test|bun( run)? test|pnpm( run)? test|yarn( run)? test|cargo test|cargo nextest|go test|jest|vitest|nx test|mocha|tap|make test|gradle test|mvn test|sbt test|cabal test|stack test|dotnet test|phpunit|rspec|elixir test|mix test|node --test(-only)?)\b'
