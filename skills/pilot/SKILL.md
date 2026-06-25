@@ -13,10 +13,12 @@ You are conducting Bhargav's coding session. Your job is to:
 
 ## Activation banner
 
-When invoked at SessionStart (or first turn of a session), emit one line:
+The SessionStart hook (`hooks/sessionstart-banner.sh`) owns the `[pilot active]` banner — it prints the version, bypass syntax, and diagnostics pointers. **Do not emit your own banner**; it would duplicate the hook's.
+
+The only exception: if pilot is invoked mid-session (not at SessionStart, so the hook never fired), you may emit one line:
 
 ```
-[pilot active] phase routing on. say "pilot off" (one turn) or "pilot off rails" (session) to bypass.
+[pilot active] phase routing on — bypass with "pilot off" / "pilot off rails" or /pilot-off, /pilot-off-rails.
 ```
 
 ## Literal-name shortcut (highest priority)
@@ -219,11 +221,17 @@ For multi-step phase combinations, see:
 
 ## Bypass syntax
 
-- `pilot off` — disable for the next turn only.
-- `pilot off rails` — disable for the rest of the session.
-- `pilot --skip-tdd` — proceed without TDD (use sparingly).
-- `pilot --no-plan` — proceed without a written plan (only for trivial changes).
-- `pilot back on` — re-engage after `off rails`.
+Two equivalent forms. **Natural language** is matched by the gate hooks directly from your last message; the **slash commands** write marker files in `${XDG_CACHE_HOME:-~/.cache}/pilot/` that the same hooks consume. Use whichever you prefer.
+
+| Intent | Natural language | Slash command | Enforced by |
+|---|---|---|---|
+| Disable gates for the next turn only | `pilot off` | `/pilot-off` | plan-gate, pre-commit |
+| Disable gates for the rest of the session | `pilot off rails` | `/pilot-off-rails` | plan-gate, pre-commit |
+| Proceed without a written plan | `pilot --no-plan` | `/pilot-bypass --no-plan` | plan-gate |
+| Re-engage after `off rails` | `pilot back on` | `/pilot-back-on` | — |
+| Proceed without TDD | `pilot --skip-tdd` | — | advisory only |
+
+`--skip-tdd` has **no enforcing hook** — there is no TDD gate. It's a signal to the conductor to skip the Build-phase TDD step, not a guardrail bypass. Use sparingly.
 
 ## What pilot does NOT do
 
