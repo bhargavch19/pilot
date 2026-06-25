@@ -32,11 +32,15 @@ jq -r '.mcpServers // {} | to_entries[] | [.key, .value.command, ((.value.args /
         echo "SKIP $name (already registered)"
         continue
       fi
+      # Register at user scope so bundled MCPs load in every project, the
+      # same way a marketplace install propagates them. Default scope is
+      # `local` (cwd-only), which would silently scope the servers to
+      # whatever dir this script happened to run in.
       # shellcheck disable=SC2086
-      if claude mcp add "$name" "$cmd" -- $args >/dev/null 2>&1; then
+      if claude mcp add --scope user "$name" "$cmd" -- $args >/dev/null 2>&1; then
         echo "ADDED $name ($cmd $args)"
       else
-        echo "FAIL $name — see: claude mcp add $name $cmd -- $args" >&2
+        echo "FAIL $name — see: claude mcp add --scope user $name $cmd -- $args" >&2
       fi
     done
 

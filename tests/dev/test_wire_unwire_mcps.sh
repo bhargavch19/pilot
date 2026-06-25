@@ -25,13 +25,13 @@ export CLAUDE_MOCK_LOG="$TMP/calls.log"
 # --- wire-mcps: fresh state, all 3 should get `add` ---
 CLAUDE_GET_EXIT=1 PATH="$TMP:$PATH" bash "$ROOT/dev/wire-mcps.sh" >/dev/null
 
-grep -q 'mcp add context7 npx -- -y @upstash/context7-mcp@2.2.5' "$CLAUDE_MOCK_LOG" \
+grep -q 'mcp add --scope user context7 npx -- -y @upstash/context7-mcp@2.2.5' "$CLAUDE_MOCK_LOG" \
   || { echo "FAIL: context7 add args wrong"; cat "$CLAUDE_MOCK_LOG"; exit 1; }
-grep -q 'mcp add playwright npx -- -y @playwright/mcp@0.0.75' "$CLAUDE_MOCK_LOG" \
+grep -q 'mcp add --scope user playwright npx -- -y @playwright/mcp@0.0.75' "$CLAUDE_MOCK_LOG" \
   || { echo "FAIL: playwright add args wrong"; cat "$CLAUDE_MOCK_LOG"; exit 1; }
-grep -q 'mcp add github npx -- -y @modelcontextprotocol/server-github@2025.4.8' "$CLAUDE_MOCK_LOG" \
+grep -q 'mcp add --scope user github npx -- -y @modelcontextprotocol/server-github@2025.4.8' "$CLAUDE_MOCK_LOG" \
   || { echo "FAIL: github add args wrong"; cat "$CLAUDE_MOCK_LOG"; exit 1; }
-echo "PASS: all 3 declared MCPs added with correct args"
+echo "PASS: all 3 declared MCPs added at user scope with correct args"
 
 # --- idempotency: `get` succeeds, so wire should skip every entry ---
 : > "$CLAUDE_MOCK_LOG"
