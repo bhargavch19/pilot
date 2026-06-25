@@ -4,6 +4,33 @@ All notable changes to the `pilot` plugin are documented here. Format roughly
 follows [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/) once 1.0 ships.
 
+## [0.7.0] — 2026-05-20
+
+Production-phases release. Extends the phase loop past Ship to cover the
+release lifecycle, makes routing observable, and keeps the post-compact
+anchor cost constant as the registry grows.
+
+### Added
+- **Three production phases** in `registry.md` (17 total): `7.5 Migration`
+  (`migration-safety`), `7.75 Pre-deploy` (`pre-deploy-checklist`), and
+  `8.5 Post-deploy` (`post-deploy-monitor`). These ship as **scaffolds** —
+  each registers and redirects to a working fallback; full content is
+  queued (see `docs/superpowers/plans/2026-05-20-production-hardening.md`).
+- **Routing telemetry.** A `PostToolUse: Skill` hook
+  (`log-skill-invocation.sh`) appends one line per routed skill to
+  `~/.cache/pilot/routing.log`, each tagged with a `session=<8char>` field
+  so concurrent Claude Code sessions don't interleave ambiguously.
+- **`/pilot-trace`** slash command — prints the current session's phase
+  chain in order, scoped by session id.
+- **Landing page + README** updated with the production-phases section and
+  the v0.7.0 version chip.
+
+### Changed
+- **PreCompact anchor cost is now ~constant.** The re-anchor injection
+  collapses the per-phase list to a single pointer ("17 phases, see
+  registry.md") instead of enumerating every phase, so token cost no
+  longer grows linearly with the registry.
+
 ## [0.6.1] — 2026-05-20
 
 First-real-dogfood patch — fixes a silent hook-wiring bug found by

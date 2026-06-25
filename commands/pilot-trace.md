@@ -7,7 +7,7 @@ Print a compact trace of every Skill invocation belonging to the current
 Claude Code session. Resolution preference:
 
 1. **By session_id** (preferred) — entries in `routing.log` carry a
-   `session=<8char>` field since v0.7.1. Scope to the most recent
+   `session=<8char>` field since v0.7.0. Scope to the most recent
    session_id and show every entry sharing it. Concurrent Claude Code
    sessions stay disambiguated.
 2. **Fallback: by `skill=pilot` boundary** — for log entries from before

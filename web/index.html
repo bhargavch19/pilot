@@ -1022,7 +1022,7 @@
         outcomeFinal: "shipped",
         steps: [
           { at: 0,    flow: "sessionstart" },
-          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.7.0 phase routing on." } },
           { at: 700,  term: { type: "system", text: "registry: skills/pilot/registry.md" } },
           { at: 1200, term: { type: "system", text: "bypass: /pilot-off | /pilot-off-rails | /pilot-bypass" } },
           { at: 1900, term: { type: "user",   text: "build a settings panel UI for the admin page" } },
@@ -1048,7 +1048,7 @@
         outcomeFinal: "blocked",
         steps: [
           { at: 0,    flow: "sessionstart" },
-          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.7.0 phase routing on." } },
           { at: 1000, term: { type: "user", text: "just refactor the auth middleware quickly" } },
           { at: 1800, set: { phase: "7. Refactor", phaseMeta: "matched on \"refactor\"", skill: "improve-codebase-architecture" } },
           { at: 1800, term: { type: "system", text: "pilot routes → 7. Refactor · improve-codebase-architecture" } },
@@ -1069,7 +1069,7 @@
         outcomeFinal: "shipped",
         steps: [
           { at: 0,    flow: "sessionstart" },
-          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.7.0 phase routing on." } },
           { at: 900,  term: { type: "user", text: "commit what we have so far" } },
           { at: 1700, set: { phase: "8. Ship", phaseMeta: "commit intent · pre-commit gates fire", skill: "gsd-ship" } },
           { at: 2400, term: { type: "assistant", text: "committing current state..." } },
@@ -1089,7 +1089,7 @@
         outcomeFinal: "gate re-engages",
         steps: [
           { at: 0,    flow: "sessionstart" },
-          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.7.0 phase routing on." } },
           { at: 900,  term: { type: "user", text: "one quick scratch edit — no plan, no fuss" } },
           { at: 1700, term: { type: "user", text: "/pilot-off" } },
           { at: 2200, marker: { name: "bypass-once", add: true }, set: { hook: "marker written", hookMeta: "~/.cache/pilot/bypass-once" } },
@@ -1110,7 +1110,7 @@
         outcomeFinal: "docs delivered",
         steps: [
           { at: 0,    flow: "sessionstart" },
-          { at: 0,    term: { type: "banner", text: "[pilot active] v0.5.1 phase routing on." } },
+          { at: 0,    term: { type: "banner", text: "[pilot active] v0.7.0 phase routing on." } },
           { at: 900,  term: { type: "user", text: "how does Server Components work in React 19?" } },
           { at: 1700, set: { phase: "Docs lookup", phaseMeta: "library + version detected", skill: "context7 MCP" } },
           { at: 1700, term: { type: "system", text: "pilot routes → Docs lookup · context7 MCP (bundled)" } },
